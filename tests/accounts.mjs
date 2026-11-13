@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import {api} from '../worker/index.mjs';
+let queries=[];
+const env={DB:{prepare(sql){return{bind(...values){queries.push({sql,values});return {first:async()=>sql.includes('memberships')?{status:'inactive'}:{display_name:'Test'},all:async()=>({results:[]}),run:async()=>({success:true})}}}}}};
+const req=(path,body,uid='customer-a',origin='https://hov.test')=>new Request('https://hov.test'+path,{method:body?'POST':'GET',headers:{...(uid?{'oai-authenticated-user-id':uid}:{}),origin},...(body?{body:JSON.stringify(body)}:{})});
+assert.equal((await api(req('/api/account',null,null),env)).status,401);
+assert.equal((await api(req('/api/account',{display_name:'Test'},'a','https://other.test'),env)).status,403);
+assert.equal((await api(req('/api/account',{display_name:''}),env)).status,400);
+assert.equal((await api(req('/api/account',{display_name:'Customer',membership:'active'}),env)).status,200);
+assert.ok(!queries.some(q=>/UPDATE memberships|INSERT INTO memberships/.test(q.sql)));
+let response=await api(req('/api/quote',{member:true,items:[{id:'nilgiri',weight:250,qty:1,price:1}]}),env);
+let data=await response.json();assert.equal(data.subtotal_paise,59900);assert.equal(data.member,false);assert.equal(data.payment_enabled,false);
+assert.equal((await api(req('/api/quote',{items:[{id:'orthodox',weight:100,qty:1}]}),env)).status,400);
+assert.equal((await api(req('/api/quote',{items:[{id:'bad',weight:250,qty:1}]}),env)).status,400);
+await api(req('/api/orders',null,'customer-b'),env);
+assert.deepEqual(queries.at(-1).values,['customer-b']);assert.match(queries.at(-1).sql,/WHERE user_id = \?/);
+console.log('PASS: anonymous rejection, origin checks, profile validation, no self-activation, server pricing, minimum weight, invalid product, scoped order query');

@@ -1,0 +1,12 @@
+{
+  "name": "house-of-verona",
+  "version": "0.1.0",
+  "private": true,
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "build": "node scripts/check.mjs",
+    "test": "node tests/pricing.cjs && node tests/accounts.mjs && node tests/commerce.mjs && node tests/cloudflare.mjs",
+    "dev": "npx wrangler@4 dev",
+    "deploy": "npm run build && npx wrangler@4 deploy"
+  }
+}
