@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS hov_franchise_enquiries (
   phone TEXT NOT NULL,
   city TEXT NOT NULL,
   state TEXT NOT NULL,
-  area_sqm INTEGER NOT NULL CHECK(area_sqm>=800),
+  area_sqft INTEGER NOT NULL CHECK(area_sqft>=800),
   location_type TEXT NOT NULL,
   experience TEXT NOT NULL,
   investment TEXT NOT NULL,

@@ -72,22 +72,22 @@ export async function handleExpansion(req,env,url,deps){
    if(clean(d.website,120))return json({received:true}); // honeypot
    const name=clean(d.name,90),email=normEmail(d.email),phone=clean(d.phone,25),
      city=clean(d.city,100),state=clean(d.state,90),
-     area=Number(d.areaSqm),location=clean(d.locationType,70),
+     area=Number(d.areaSqft),location=clean(d.locationType,70),
      experience=clean(d.experience,800),investment=clean(d.investment,100),
      notes=clean(d.notes,1200),consent=d.consent===true;
    if(name.length<3||email.length>180||!emailPattern.test(email)||digits(phone).length<10||
-      city.length<2||state.length<2||!Number.isFinite(area)||area<800||area>50000||
-      location.length<3||experience.length<10||investment.length<2||!consent)return fail('Please complete the required fields. Proposed site area must be at least 800 sq m.');
+      city.length<2||state.length<2||!Number.isFinite(area)||area<800||area>100000||
+      location.length<3||experience.length<10||investment.length<2||!consent)return fail('Please complete the required fields. Proposed site area must be at least 800 sq ft.');
    if(!await limit(env,'franchise-email:'+email,2,86400))return fail('Your enquiry was already submitted. Contact us for updates.',429);
    const id='HOV-FR-'+rid().slice(0,8).toUpperCase();
-   await env.DB.prepare("INSERT INTO hov_franchise_enquiries(id,name,email,phone,city,state,area_sqm,location_type,experience,investment,notes,consent,status) VALUES(?,?,?,?,?,?,?,?,?,?,?,1,'new')")
+   await env.DB.prepare("INSERT INTO hov_franchise_enquiries(id,name,email,phone,city,state,area_sqft,location_type,experience,investment,notes,consent,status) VALUES(?,?,?,?,?,?,?,?,?,?,?,1,'new')")
      .bind(id,name,email,phone,city,state,Math.round(area),location,experience,investment,notes).run();
    let notificationSent=false;
    try{
      await sendEmail(env,'info@houseofverona.in','New House of Verona franchise enquiry '+id,
        '<h2>Franchise enquiry '+html(id)+'</h2><p><strong>Applicant:</strong> '+html(name)+'</p><p><strong>Email:</strong> '+html(email)+'</p>'+
        '<p><strong>Phone:</strong> '+html(phone)+'</p><p><strong>Location:</strong> '+html(city+', '+state)+'</p>'+
-       '<p><strong>Area:</strong> '+Math.round(area)+' sq m</p><p><strong>Site:</strong> '+html(location)+'</p>'+
+       '<p><strong>Area:</strong> '+Math.round(area)+' sq ft</p><p><strong>Site:</strong> '+html(location)+'</p>'+
        '<p><strong>Experience:</strong> '+html(experience)+'</p><p><strong>Investment:</strong> '+html(investment)+'</p><p><strong>Notes:</strong> '+html(notes)+'</p>'+
        '<p>Applicant consent recorded; application is non-binding and fee-free.</p>');
      notificationSent=true;
