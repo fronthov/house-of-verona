@@ -10,7 +10,21 @@ const hex=arr=>Array.from(new Uint8Array(arr),b=>b.toString(16).padStart(2,'0'))
 async function digest(s){return hex(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)))}
 const secureHeaders={'x-content-type-options':'nosniff','referrer-policy':'strict-origin-when-cross-origin','x-frame-options':'DENY','permissions-policy':'camera=(), microphone=(), geolocation=()'};
 function cookie(request){return (request.headers.get('cookie')||'').split(';').map(s=>s.trim()).find(x=>x.startsWith('hov_session='))?.slice(12)||''}
-async function currentUser(request,env){const token=cookie(request);if(!token)return null;const hash=await digest(token+(env.AUTH_PEPPER||''));const u=await env.DB.prepare('SELECT u.id,u.email, COALESCE(m.status,\'inactive\') membership FROM hov_sessions s JOIN hov_users u ON s.user_id=u.id LEFT JOIN hov_memberships m ON m.user_id=u.id WHERE s.hash=? AND s.expires_at>?').bind(hash,now()).first();if(!u)return null;return {...u,admin:!!env.ADMIN_EMAIL&&u.email===normEmail(env.ADMIN_EMAIL)}}
+async function currentUser(request,env){
+ const token=cookie(request);
+ if(!token)return null;
+ const hash=await digest(token+(env.AUTH_PEPPER||''));
+ const u=await env.DB.prepare(
+  "SELECT u.id,u.email, CASE WHEN c.user_id IS NOT NULL THEN CASE WHEN c.purchased_at<=? AND c.expires_at>? THEN 'active' ELSE 'expired' END "+
+  "ELSE COALESCE(m.status,'inactive') END membership, "+
+  "c.card_id AS cardId,c.member_name AS memberName,c.purchased_at AS memberSince,c.expires_at AS memberUntil "+
+  "FROM hov_sessions s JOIN hov_users u ON s.user_id=u.id "+
+  "LEFT JOIN hov_memberships m ON m.user_id=u.id LEFT JOIN hov_member_cards c ON c.user_id=u.id "+
+  "WHERE s.hash=? AND s.expires_at>?"
+ ).bind(now(),now(),hash,now()).first();
+ if(!u)return null;
+ return {...u,admin:!!env.ADMIN_EMAIL&&u.email===normEmail(env.ADMIN_EMAIL)}
+}
 async function requireUser(req,env){const u=await currentUser(req,env);if(!u)throw Object.assign(new Error('Please sign in first'),{status:401});return u}
 async function requireAdmin(req,env){const u=await requireUser(req,env);if(!u.admin)throw Object.assign(new Error('Administrator access required'),{status:403});return u}
 async function body(req){if(Number(req.headers.get('content-length')||0)>30000)throw Error('Request too large');try{return await req.json()}catch{throw Error('Invalid request data')}}

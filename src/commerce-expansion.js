@@ -1,5 +1,6 @@
-// House of Verona — franchise enquiries and payment-verified lifetime memberships.
+// House of Verona — franchise enquiries and payment-verified annual memberships.
 // Keep Razorpay keys and webhook secret in Cloudflare Worker secrets, never GitHub.
+import {oneCalendarYearAfter,cardNumberFromPayment,cardName,cardForUser,notifyCardByEmail,isAnnualCardActive} from './member-cards.js';
 const stamp = ()=>Math.floor(Date.now()/1000);
 const cutoff = Date.parse('2027-10-27T23:59:59+05:30')/1000;
 export const PROMO_END_AT=cutoff;
@@ -48,20 +49,35 @@ async function verifiedCapturedPayment(env,paymentId,attempt){
 async function markMembershipPaid(env,attempt,paymentId,eventId=''){
  const payment=String(paymentId);
  if(!/^pay_[A-Za-z0-9]+$/.test(payment))return false;
- if(attempt.status==='paid'){
-   return attempt.razorpay_payment_id===payment;
- }
+ if(attempt.status==='paid')return attempt.razorpay_payment_id===payment;
  if(attempt.status!=='created')return false;
- // D1 batch executes atomically. Never activate a member from browser-only success.
- const queries=[
-   env.DB.prepare("UPDATE hov_membership_payments SET status='paid',razorpay_payment_id=?,verified_at=CURRENT_TIMESTAMP WHERE id=? AND status='created'").bind(payment,attempt.id)
+ const isTest=isTestTransaction(env),capturedAt=stamp();
+ let request=null;
+ if(!isTest){
+   request=await env.DB.prepare('SELECT member_name FROM hov_member_card_requests WHERE razorpay_order_id=? AND user_id=?')
+     .bind(attempt.razorpay_order_id,attempt.user_id).first();
+   if(!request?.member_name)throw Object.assign(new Error('Membership card request needs manual review'),{status:409});
+ }
+ const statements=[
+   env.DB.prepare("UPDATE hov_membership_payments SET status='paid',razorpay_payment_id=?,verified_at=CURRENT_TIMESTAMP WHERE id=? AND status='created'")
+     .bind(payment,attempt.id)
  ];
- // A captured Razorpay TEST payment is not real money and must not grant membership in production.
- if(!isTestTransaction(env))queries.push(
-   env.DB.prepare("INSERT INTO hov_memberships(user_id,status) VALUES(?,'active') ON CONFLICT(user_id) DO UPDATE SET status='active',updated_at=CURRENT_TIMESTAMP").bind(attempt.user_id)
- );
- if(eventId)queries.push(env.DB.prepare("INSERT OR IGNORE INTO hov_payment_events(event_id,razorpay_order_id) VALUES(?,?)").bind(eventId,attempt.razorpay_order_id));
- await env.DB.batch(queries);
+ if(!isTest){
+   const cardId=cardNumberFromPayment(attempt.id),expires=oneCalendarYearAfter(capturedAt);
+   // One card per user. Expired cards can be replaced on renewed, verified purchase.
+   statements.push(env.DB.prepare(
+     'INSERT INTO hov_member_cards(card_id,user_id,member_name,razorpay_order_id,razorpay_payment_id,purchased_at,expires_at) '+
+     'VALUES(?,?,?,?,?,?,?) ON CONFLICT(user_id) DO UPDATE SET card_id=excluded.card_id,member_name=excluded.member_name,'+
+     'razorpay_order_id=excluded.razorpay_order_id,razorpay_payment_id=excluded.razorpay_payment_id,'+
+     'purchased_at=excluded.purchased_at,expires_at=excluded.expires_at,email_sent_at=NULL,email_claimed_at=NULL '+
+     'WHERE hov_member_cards.expires_at<=excluded.purchased_at')
+     .bind(cardId,attempt.user_id,request.member_name,attempt.razorpay_order_id,payment,capturedAt,expires)
+   );
+ }
+ if(eventId)statements.push(env.DB.prepare(
+   'INSERT OR IGNORE INTO hov_payment_events(event_id,razorpay_order_id) VALUES(?,?)')
+   .bind(eventId,attempt.razorpay_order_id));
+ await env.DB.batch(statements);
  return true;
 }
 const emailPattern=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -71,9 +87,29 @@ export async function handleExpansion(req,env,url,deps){
  const path=url.pathname,method=req.method;
  if(path==='/api/membership/offer'&&method==='GET'){
    const u=await currentUser(req,env);
-   return json({lifetime:true,price:membershipPriceAt(),currency:'INR',promotionEnds:'2027-10-27T23:59:59+05:30',
-     afterOfferPrice:9999,checkoutEnabled:isRazorpayReady(env,u),testMode:membershipPaymentMode(env,u)==='test',memberActive:u?.membership==='active',
-     tiers:MEMBER_TIERS,eligibleProducts:'Eligible tea and coffee only. Weight-based tiers; no food or book discount.'});
+   return json({annual:true,validity:'One calendar year from verified payment',price:membershipPriceAt(),
+     currency:'INR',promotionEnds:'2027-10-27T23:59:59+05:30',afterOfferPrice:9999,
+     checkoutEnabled:isRazorpayReady(env,u),testMode:membershipPaymentMode(env,u)==='test',
+     memberActive:u?.membership==='active',cardAvailable:!!u?.cardId,
+     expiresAt:u?.memberUntil||null,tiers:MEMBER_TIERS,
+     eligibleProducts:'Eligible tea and coffee only. Weight-based tiers; no food or book discount.'});
+ }
+ if(path==='/api/membership/card'&&method==='GET'){
+   const u=await requireUser(req,env),card=await cardForUser(env,u.id);
+   if(!card)return fail('No paid membership card is associated with this account',404);
+   return json({card:{id:card.card_id,name:card.member_name,email:u.email,
+       purchasedAt:card.purchased_at,expiresAt:card.expires_at,
+       status:isAnnualCardActive(card)?'active':'expired'}});
+ }
+ if(path==='/api/membership/card/email'&&method==='POST'){
+   const u=await requireUser(req,env);
+   if(!await limit(env,'member-card-email:'+u.id,3,86400))return fail('Too many card email requests. Try again tomorrow.',429);
+   const card=await cardForUser(env,u.id);
+   if(!card)return fail('No paid membership card on this account',404);
+   if(!isAnnualCardActive(card))return fail('This membership card has expired',409);
+   const sent=await notifyCardByEmail(env,card,u.email,sendEmail,{force:true});
+   if(!sent)return fail('Could not send the card email now. Your card remains available online.',503);
+   return json({sent:true,message:'Membership card email sent or already delivered today.'});
  }
  if(path==='/api/franchise/enquiry'&&method==='POST'){
    const ip=req.headers.get('cf-connecting-ip')||'local';
@@ -109,20 +145,32 @@ export async function handleExpansion(req,env,url,deps){
  }
  if(path==='/api/membership/checkout'&&method==='POST'){
    const user=await requireUser(req,env);
+   const input=await req.json().catch(()=>null);
+   const name=cardName(input?.name);
+   if(name.length<2||!/^[\\p{L}\\p{M} .'-]+$/u.test(name))
+     return fail('Enter your full name for the membership card');
    if(user.membership==='active')return fail('Your lifetime Veronates membership is already active',409);
    if(!isRazorpayReady(env,user))return fail('Secure membership payments are not open yet. Please contact the House.',503);
    if(!await limit(env,'member-pay:'+user.id,5,3600))return fail('Too many checkout attempts',429);
    // Reuse a recently created order, preventing repeat taps from producing multiple charges.
    const latest=await env.DB.prepare("SELECT * FROM hov_membership_payments WHERE user_id=? AND status='created' AND created_at_unix>? ORDER BY created_at_unix DESC LIMIT 1").bind(user.id,stamp()-900).first();
-   if(latest)return json({orderId:latest.razorpay_order_id,keyId:env.RAZORPAY_KEY_ID,amount:latest.amount_paise,currency:'INR',purchase:'lifetime'});
+   if(latest){
+     const previous=await env.DB.prepare('SELECT member_name FROM hov_member_card_requests WHERE razorpay_order_id=?').bind(latest.razorpay_order_id).first();
+     if(previous?.member_name!==name)return fail('An earlier checkout has a different card name. Please try again after 15 minutes.',409);
+     return json({orderId:latest.razorpay_order_id,keyId:env.RAZORPAY_KEY_ID,amount:latest.amount_paise,currency:'INR',purchase:'annual'});
+   }
    const amount=membershipPriceAt()*100,receipt='HOVM-'+rid().replace(/-/g,'').slice(0,25);
    const order=await razorpayRequest(env,'POST','orders',{amount,currency:'INR',receipt,
      notes:{product:'veronates_lifetime',account_id:user.id}});
    if(!/^order_[A-Za-z0-9]+$/.test(String(order.id))||order.amount!==amount||order.currency!=='INR')
       return fail('Payment provider returned an unexpected order',502);
-   await env.DB.prepare("INSERT INTO hov_membership_payments(id,user_id,razorpay_order_id,amount_paise,currency,status,created_at_unix) VALUES(?,?,?,?,'INR','created',?)")
-     .bind(rid(),user.id,order.id,amount,stamp()).run();
-   return json({orderId:order.id,keyId:env.RAZORPAY_KEY_ID,amount,currency:'INR',purchase:'lifetime'},201);
+   await env.DB.batch([
+     env.DB.prepare("INSERT INTO hov_membership_payments(id,user_id,razorpay_order_id,amount_paise,currency,status,created_at_unix) VALUES(?,?,?,?,'INR','created',?)")
+       .bind(rid(),user.id,order.id,amount,stamp()),
+     env.DB.prepare('INSERT INTO hov_member_card_requests(razorpay_order_id,user_id,member_name) VALUES(?,?,?)')
+       .bind(order.id,user.id,name)
+   ]);
+   return json({orderId:order.id,keyId:env.RAZORPAY_KEY_ID,amount,currency:'INR',purchase:'annual'},201);
  }
  if(path==='/api/membership/verify'&&method==='POST'){
    const user=await requireUser(req,env);
@@ -139,8 +187,13 @@ export async function handleExpansion(req,env,url,deps){
    if(!constantHexEqual(expected,signature))return fail('Payment signature verification failed',403);
    if(!await verifiedCapturedPayment(env,paymentId,attempt))
       return fail('Payment not yet captured. Membership activates only after verified capture.',409);
-   await markMembershipPaid(env,attempt,paymentId);
-   return json({paid:true,membership:isTestTransaction(env)?'test_verified':'active',lifetime:!isTestTransaction(env),testMode:isTestTransaction(env)});
+   if(!await markMembershipPaid(env,attempt,paymentId))return fail('Membership payment verification conflict',409);
+   if(isTestTransaction(env))return json({paid:true,membership:'test_verified',testMode:true});
+   const card=await cardForUser(env,user.id);
+   if(!card||card.razorpay_payment_id!==paymentId)return fail('Payment captured; card needs manual review. Do not pay again.',409);
+   const emailSent=await notifyCardByEmail(env,card,user.email,sendEmail);
+   return json({paid:true,membership:'active',annual:true,cardId:card.card_id,
+     purchasedAt:card.purchased_at,expiresAt:card.expires_at,emailSent});
  }
  if(path==='/api/membership/webhook'&&method==='POST'){
    if(!env.RAZORPAY_WEBHOOK_SECRET)return fail('Webhook not configured',503);
@@ -161,7 +214,14 @@ export async function handleExpansion(req,env,url,deps){
    // Webhook signature authenticates notification; API recheck confirms capture and amount.
    if(!await verifiedCapturedPayment(env,payment.id,attempt))return fail('Payment capture not verified',409);
    const eventId=clean(req.headers.get('x-razorpay-event-id'),120);
-   await markMembershipPaid(env,attempt,payment.id,eventId);
+   if(!await markMembershipPaid(env,attempt,payment.id,eventId))return fail('Payment already linked to a different record',409);
+   if(!isTestTransaction(env)){
+     const card=await cardForUser(env,attempt.user_id);
+     if(card?.razorpay_payment_id===payment.id){
+       const u=await env.DB.prepare('SELECT email FROM hov_users WHERE id=?').bind(attempt.user_id).first();
+       if(u?.email)await notifyCardByEmail(env,card,u.email,sendEmail);
+     }
+   }
    return json({accepted:true});
  }
  return null;
