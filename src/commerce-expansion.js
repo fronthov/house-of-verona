@@ -69,8 +69,8 @@ async function markMembershipPaid(env,attempt,paymentId,eventId=''){
      'INSERT INTO hov_member_cards(card_id,user_id,member_name,razorpay_order_id,razorpay_payment_id,purchased_at,expires_at) '+
      'VALUES(?,?,?,?,?,?,?) ON CONFLICT(user_id) DO UPDATE SET card_id=excluded.card_id,member_name=excluded.member_name,'+
      'razorpay_order_id=excluded.razorpay_order_id,razorpay_payment_id=excluded.razorpay_payment_id,'+
-     'purchased_at=excluded.purchased_at,expires_at=excluded.expires_at,email_sent_at=NULL,email_claimed_at=NULL '+
-     'WHERE hov_member_cards.expires_at<=excluded.purchased_at')
+     'purchased_at=excluded.purchased_at,expires_at=excluded.expires_at,email_sent_at=NULL,email_claimed_at=NULL,revoked_at=NULL '+
+     'WHERE hov_member_cards.expires_at<=excluded.purchased_at OR hov_member_cards.revoked_at IS NOT NULL')
      .bind(cardId,attempt.user_id,request.member_name,attempt.razorpay_order_id,payment,capturedAt,expires)
    );
  }
@@ -99,7 +99,7 @@ export async function handleExpansion(req,env,url,deps){
    if(!card)return fail('No paid membership card is associated with this account',404);
    return json({card:{id:card.card_id,name:card.member_name,email:u.email,
        purchasedAt:card.purchased_at,expiresAt:card.expires_at,
-       status:isAnnualCardActive(card)?'active':'expired'}});
+       status:card.revoked_at?'revoked':isAnnualCardActive(card)?'active':'expired'}});
  }
  if(path==='/api/membership/card/email'&&method==='POST'){
    const u=await requireUser(req,env);
@@ -205,6 +205,25 @@ export async function handleExpansion(req,env,url,deps){
    if(!constantHexEqual(expected,got))return fail('Invalid webhook signature',403);
    const payload=JSON.parse(raw);
    const event=payload.event;
+   if(event==='payment.refunded'){
+     const payment=payload.payload?.payment?.entity;
+     if(!payment?.id||!payment?.order_id)return json({accepted:true});
+     const attempt=await env.DB.prepare('SELECT * FROM hov_membership_payments WHERE razorpay_order_id=?')
+       .bind(payment.order_id).first();
+     if(!attempt)return json({accepted:true});
+     // Only a fully refunded membership charge revokes its annual benefits.
+     const fresh=await razorpayRequest(env,'GET','payments/'+encodeURIComponent(payment.id));
+     if(fresh.id!==payment.id||fresh.order_id!==attempt.razorpay_order_id||
+        fresh.status!=='refunded'||Number(fresh.amount_refunded)<attempt.amount_paise)
+       return fail('Refund is not yet fully verified',409);
+     await env.DB.batch([
+       env.DB.prepare("UPDATE hov_membership_payments SET status='refunded' WHERE id=?")
+         .bind(attempt.id),
+       env.DB.prepare('UPDATE hov_member_cards SET revoked_at=? WHERE razorpay_payment_id=? AND revoked_at IS NULL')
+         .bind(stamp(),payment.id)
+     ]);
+     return json({accepted:true,revoked:true});
+   }
    if(!['payment.captured','order.paid'].includes(event))return json({accepted:true});
    const payment=payload.payload?.payment?.entity;
    if(!payment?.id||!payment.order_id)return json({accepted:true});

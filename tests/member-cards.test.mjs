@@ -24,3 +24,9 @@ test('cards contain member, ID and expiry but escape customer HTML',()=>{
  assert.doesNotMatch(html,/<Admin & Team>/);
  assert.equal(cardName('  First   Last  '),'First Last');
 });
+
+test('a fully refunded membership cannot stay active',()=>{
+ const start=Date.parse('2026-11-16T10:00:00+05:30')/1000;
+ const card={purchased_at:start,expires_at:oneCalendarYearAfter(start),revoked_at:start+10};
+ assert.equal(isAnnualCardActive(card,start+11),false);
+});

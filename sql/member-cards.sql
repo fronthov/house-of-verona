@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS hov_member_cards (
   expires_at INTEGER NOT NULL,
   email_sent_at INTEGER,
   email_claimed_at INTEGER,
+  revoked_at INTEGER,
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CHECK(expires_at>purchased_at)
 );

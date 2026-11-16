@@ -15,7 +15,7 @@ async function currentUser(request,env){
  if(!token)return null;
  const hash=await digest(token+(env.AUTH_PEPPER||''));
  const u=await env.DB.prepare(
-  "SELECT u.id,u.email, CASE WHEN c.user_id IS NOT NULL THEN CASE WHEN c.purchased_at<=? AND c.expires_at>? THEN 'active' ELSE 'expired' END "+
+  "SELECT u.id,u.email, CASE WHEN c.user_id IS NOT NULL THEN CASE WHEN c.revoked_at IS NOT NULL THEN 'revoked' WHEN c.purchased_at<=? AND c.expires_at>? THEN 'active' ELSE 'expired' END "+
   "ELSE COALESCE(m.status,'inactive') END membership, "+
   "c.card_id AS cardId,c.member_name AS memberName,c.purchased_at AS memberSince,c.expires_at AS memberUntil "+
   "FROM hov_sessions s JOIN hov_users u ON s.user_id=u.id "+

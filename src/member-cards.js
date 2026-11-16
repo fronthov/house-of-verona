@@ -9,7 +9,7 @@ export function oneCalendarYearAfter(purchasedAt) {
    start.getUTCHours(),start.getUTCMinutes(),start.getUTCSeconds())/1000);
 }
 export const isAnnualCardActive=(card,at=Math.floor(Date.now()/1000))=>
- !!card&&Number(card.purchased_at)<=at&&Number(card.expires_at)>at;
+ !!card&&card.revoked_at==null&&Number(card.purchased_at)<=at&&Number(card.expires_at)>at;
 export const cardNumberFromPayment = paymentAttemptId =>
   'HOV-V-'+String(paymentAttemptId).replace(/[^A-Za-z0-9]/g,'').slice(0,19).toUpperCase();
 export const cardName = input=>String(input??'').trim().replace(/\s+/g,' ').slice(0,80);
@@ -38,7 +38,7 @@ export function cardEmailHtml(card) {
  '<small>India in Every Sip · Fairness in Every Cup</small></div></div>';
 }
 export async function cardForUser(env,userId) {
- return env.DB.prepare('SELECT card_id,user_id,member_name,razorpay_order_id,razorpay_payment_id,purchased_at,expires_at,email_sent_at,email_claimed_at FROM hov_member_cards WHERE user_id=?')
+ return env.DB.prepare('SELECT card_id,user_id,member_name,razorpay_order_id,razorpay_payment_id,purchased_at,expires_at,email_sent_at,email_claimed_at,revoked_at FROM hov_member_cards WHERE user_id=?')
   .bind(userId).first();
 }
 export async function notifyCardByEmail(env,card,email,sendEmail,{force=false}={}){
