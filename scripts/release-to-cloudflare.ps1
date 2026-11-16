@@ -17,6 +17,7 @@ if ($config.d1_databases[0].database_name -ne "hov-store") { throw "Wrong D1 dat
 if ($config.d1_databases[0].database_id -ne "5afde4dd-7f21-4ea0-8ba3-f7a45f4cf716") { throw "Wrong production D1 database ID." }
 if ($config.vars.SITE_URL -ne "https://houseofverona.in") { throw "Wrong SITE_URL." }
 if ($config.vars.STORE_OPEN -ne "true") { throw "Store open state differs from current live site." }
+if ($config.keep_vars -ne $true) { throw "Wrangler must retain existing dashboard-managed Razorpay variables and secrets." }
 # Fail closed: never ship payment credentials or webhook secrets as plain-text Wrangler vars.
 $protectedKeys = @("RAZORPAY_KEY_ID", "RAZORPAY_KEY_SECRET", "RAZORPAY_WEBHOOK_SECRET")
 foreach ($key in $protectedKeys) {
@@ -46,5 +47,22 @@ try {
 } catch {
     Write-Warning "Health check did not verify. Inspect Cloudflare dashboard immediately: $($_.Exception.Message)"
 }
-Write-Host "Release finished. Franchise form needs a real submission/email test; Razorpay membership payments remain disabled." -ForegroundColor Yellow
+Write-Host "Checking the deployed annual membership endpoints..." -ForegroundColor Cyan
+try {
+    $offer = Invoke-RestMethod -Uri "https://houseofverona.in/api/membership/offer" -TimeoutSec 25
+    if ($offer.annual -ne $true -or $offer.price -ne 999) {
+        throw "Expected annual=true and introductory price=999 in membership offer."
+    }
+    if ($offer.checkoutEnabled -ne $false) {
+        throw "Anonymous membership checkout unexpectedly enabled; review pilot restrictions."
+    }
+    $cardPage = Invoke-WebRequest -Uri "https://houseofverona.in/membership-card.html" -UseBasicParsing -TimeoutSec 25
+    if ($cardPage.StatusCode -ne 200 -or -not $cardPage.Content.Contains("VERONATES")) {
+        throw "Membership card page did not render."
+    }
+    Write-Host "Annual membership offer and digital card page verified." -ForegroundColor Green
+} catch {
+    Write-Warning "Annual membership smoke test failed; keep public payments disabled: $($_.Exception.Message)"
+}
+Write-Host "Release finished. Open live payment only for the nominated pilot account, then check real payment, card, and email." -ForegroundColor Yellow
 Write-Host "Before enabling Razorpay: configure verified secret keys and webhook, test captured payment and refunds, then confirm authorisation." -ForegroundColor Yellow
