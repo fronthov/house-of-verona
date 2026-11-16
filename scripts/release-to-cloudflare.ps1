@@ -23,7 +23,12 @@ $protectedKeys = @("RAZORPAY_KEY_ID", "RAZORPAY_KEY_SECRET", "RAZORPAY_WEBHOOK_S
 foreach ($key in $protectedKeys) {
     if ($config.vars.PSObject.Properties.Name -contains $key) { throw "$key must be a Cloudflare Secret, not a wrangler.jsonc vars entry." }
 }
-if ($config.vars.MEMBERSHIP_PAYMENTS_ENABLED -eq "true") { throw "Cannot deploy with membership payments enabled before live payment verification." }
+# The general release is restricted to a controlled live pilot.
+# Public checkout must be opened only by scripts/activate-public-memberships.ps1
+# after verifying an actual paid, emailed one-year card in production D1.
+if ($config.vars.MEMBERSHIP_PAYMENTS_ENABLED -ne "true" -or $config.vars.MEMBERSHIP_LIVE_PILOT_ONLY -ne "true") {
+    throw "This release requires live payments ENABLED but PILOT_ONLY true. Use the public activation script after a verified pilot payment."
+}
 & npm.cmd test
 if ($LASTEXITCODE -ne 0) { throw "Tests failed. Live Worker unchanged." }
 Invoke-HoVCommand -Arguments @("deploy", "--dry-run")
@@ -38,7 +43,7 @@ Write-Host "Applying additive franchise/membership schema..." -ForegroundColor C
 Invoke-HoVCommand -Arguments @("d1", "execute", "hov-store", "--remote", "--file=./sql/expansion.sql")
 Write-Host "Applying idempotent one-year member-card tables..." -ForegroundColor Cyan
 Invoke-HoVCommand -Arguments @("d1", "execute", "hov-store", "--remote", "--file=./sql/member-cards.sql")
-Write-Host "Updating existing Cloudflare Worker, keeping website orders open and membership payments disabled..." -ForegroundColor Cyan
+Write-Host "Updating the existing Cloudflare Worker with live payments restricted to the selected pilot..." -ForegroundColor Cyan
 Invoke-HoVCommand -Arguments @("deploy")
 try {
     $response = Invoke-RestMethod -Uri "https://houseofverona.in/api/health" -TimeoutSec 20
@@ -64,5 +69,5 @@ try {
 } catch {
     Write-Warning "Annual membership smoke test failed; keep public payments disabled: $($_.Exception.Message)"
 }
-Write-Host "Release finished. Open live payment only for the nominated pilot account, then check real payment, card, and email." -ForegroundColor Yellow
-Write-Host "Before enabling Razorpay: configure verified secret keys and webhook, test captured payment and refunds, then confirm authorisation." -ForegroundColor Yellow
+Write-Host "Pilot release finished. Public membership payments remain RESTRICTED until a captured live payment, card and email are verified." -ForegroundColor Yellow
+Write-Host "After a real pilot payment and confirmed member email, run scripts/activate-public-memberships.ps1 to open checkout to all customers." -ForegroundColor Yellow

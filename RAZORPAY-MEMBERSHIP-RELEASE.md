@@ -37,3 +37,12 @@ Webhook secret must match Cloudflare's RAZORPAY_WEBHOOK_SECRET. Inspect webhook 
 - Check the pilot restriction blocks non-pilot members; after success, set MEMBERSHIP_LIVE_PILOT_ONLY to false to open public annual membership payments.
 - Configure Resend verified FROM_EMAIL, payment reconciliation, refund workflow, customer policy and statutory disclosures before advertising.
 - Existing coffee/tea checkout remains founder-reviewed WhatsApp/manual payment. This checkout handles only Veronates membership payments.
+
+## Public activation through GitHub + PowerShell
+- In source code, the two NON-SECRET variables are now tracked: MEMBERSHIP_PAYMENTS_ENABLED=true and MEMBERSHIP_LIVE_PILOT_ONLY=true. This is the controlled live pilot state, NOT public checkout.
+- Download the latest review-branch ZIP; run scripts/release-to-cloudflare.ps1, which backs up D1, applies migrations and deploys pilot-only access.
+- If the founder session isn't recognised as admin, set MEMBERSHIP_LIVE_PILOT_EMAIL to the controlled pilot login via Cloudflare Secret. Never store API tokens or private customer emails in the public repository.
+- Complete one real INR 999 pilot, check captured Razorpay status, successful annual card, and email delivered to the recipient.
+- Run scripts/activate-public-memberships.ps1. This checks deployed API and card page, confirms at least one real paid annual card with server-confirmed email acceptance in D1, then requests explicit OPEN confirmation, sets MEMBERSHIP_LIVE_PILOT_ONLY=false and deploys. It verifies the public offer afterwards.
+- Public activation modifies local wrangler.jsonc to PILOT_ONLY=false. Commit/sync the non-secret config back to GitHub after success to avoid future deploys reversing it. Do NOT run the general pilot release script once publicly enabled.
+- You may alternatively add the two variables via Cloudflare Settings if you have direct access; never put payment API keys or webhook password in the source file.
