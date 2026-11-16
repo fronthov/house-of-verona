@@ -16,7 +16,12 @@ const basic = env=>'Basic '+btoa(env.RAZORPAY_KEY_ID+':'+env.RAZORPAY_KEY_SECRET
 export function membershipPaymentMode(env,user=null){
  const hasSecrets=!!env.RAZORPAY_KEY_ID&&!!env.RAZORPAY_KEY_SECRET&&!!env.RAZORPAY_WEBHOOK_SECRET;
  if(!hasSecrets)return 'disabled';
- if(env.MEMBERSHIP_PAYMENTS_ENABLED==='true' && String(env.RAZORPAY_KEY_ID).startsWith('rzp_live_'))return 'live';
+ if(env.MEMBERSHIP_PAYMENTS_ENABLED==='true' && String(env.RAZORPAY_KEY_ID).startsWith('rzp_live_')){
+   const pilot=env.MEMBERSHIP_LIVE_PILOT_ONLY==='true';
+   const pilotEmail=String(env.MEMBERSHIP_LIVE_PILOT_EMAIL||'').trim().toLowerCase();
+   if(pilot && !user?.admin && (!user?.email||user.email!==pilotEmail))return 'disabled';
+   return 'live';
+ }
  if(env.MEMBERSHIP_PAYMENTS_ENABLED!=='true'&&env.MEMBERSHIP_TEST_MODE==='true'&&user?.admin===true&&String(env.RAZORPAY_KEY_ID).startsWith('rzp_test_'))return 'test';
  return 'disabled';
 }
