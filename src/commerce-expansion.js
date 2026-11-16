@@ -12,7 +12,15 @@ export const MEMBER_TIERS = [
 ];
 const html = s=>String(s??'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[x]));
 const basic = env=>'Basic '+btoa(env.RAZORPAY_KEY_ID+':'+env.RAZORPAY_KEY_SECRET);
-const isRazorpayReady = env=>env.MEMBERSHIP_PAYMENTS_ENABLED==='true'&&!!env.RAZORPAY_KEY_ID&&!!env.RAZORPAY_KEY_SECRET&&!!env.RAZORPAY_WEBHOOK_SECRET;
+export function membershipPaymentMode(env,user=null){
+ const hasSecrets=!!env.RAZORPAY_KEY_ID&&!!env.RAZORPAY_KEY_SECRET&&!!env.RAZORPAY_WEBHOOK_SECRET;
+ if(!hasSecrets)return 'disabled';
+ if(env.MEMBERSHIP_PAYMENTS_ENABLED==='true' && String(env.RAZORPAY_KEY_ID).startsWith('rzp_live_'))return 'live';
+ if(env.MEMBERSHIP_PAYMENTS_ENABLED!=='true'&&env.MEMBERSHIP_TEST_MODE==='true'&&user?.admin===true&&String(env.RAZORPAY_KEY_ID).startsWith('rzp_test_'))return 'test';
+ return 'disabled';
+}
+const isRazorpayReady = (env,user)=>membershipPaymentMode(env,user)!=='disabled';
+const isTestTransaction=env=>String(env.RAZORPAY_KEY_ID||'').startsWith('rzp_test_');
 export async function hmacHex(key,payload){
  const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(key),{name:'HMAC',hash:'SHA-256'},false,['sign']);
  const sig=await crypto.subtle.sign('HMAC',k,new TextEncoder().encode(payload));
@@ -46,9 +54,12 @@ async function markMembershipPaid(env,attempt,paymentId,eventId=''){
  if(attempt.status!=='created')return false;
  // D1 batch executes atomically. Never activate a member from browser-only success.
  const queries=[
-   env.DB.prepare("UPDATE hov_membership_payments SET status='paid',razorpay_payment_id=?,verified_at=CURRENT_TIMESTAMP WHERE id=? AND status='created'").bind(payment,attempt.id),
-   env.DB.prepare("INSERT INTO hov_memberships(user_id,status) VALUES(?,'active') ON CONFLICT(user_id) DO UPDATE SET status='active',updated_at=CURRENT_TIMESTAMP").bind(attempt.user_id)
+   env.DB.prepare("UPDATE hov_membership_payments SET status='paid',razorpay_payment_id=?,verified_at=CURRENT_TIMESTAMP WHERE id=? AND status='created'").bind(payment,attempt.id)
  ];
+ // A captured Razorpay TEST payment is not real money and must not grant membership in production.
+ if(!isTestTransaction(env))queries.push(
+   env.DB.prepare("INSERT INTO hov_memberships(user_id,status) VALUES(?,'active') ON CONFLICT(user_id) DO UPDATE SET status='active',updated_at=CURRENT_TIMESTAMP").bind(attempt.user_id)
+ );
  if(eventId)queries.push(env.DB.prepare("INSERT OR IGNORE INTO hov_payment_events(event_id,razorpay_order_id) VALUES(?,?)").bind(eventId,attempt.razorpay_order_id));
  await env.DB.batch(queries);
  return true;
@@ -61,7 +72,7 @@ export async function handleExpansion(req,env,url,deps){
  if(path==='/api/membership/offer'&&method==='GET'){
    const u=await currentUser(req,env);
    return json({lifetime:true,price:membershipPriceAt(),currency:'INR',promotionEnds:'2027-10-27T23:59:59+05:30',
-     afterOfferPrice:9999,checkoutEnabled:isRazorpayReady(env),memberActive:u?.membership==='active',
+     afterOfferPrice:9999,checkoutEnabled:isRazorpayReady(env,u),testMode:membershipPaymentMode(env,u)==='test',memberActive:u?.membership==='active',
      tiers:MEMBER_TIERS,eligibleProducts:'Eligible tea and coffee only. Weight-based tiers; no food or book discount.'});
  }
  if(path==='/api/franchise/enquiry'&&method==='POST'){
@@ -99,7 +110,7 @@ export async function handleExpansion(req,env,url,deps){
  if(path==='/api/membership/checkout'&&method==='POST'){
    const user=await requireUser(req,env);
    if(user.membership==='active')return fail('Your lifetime Veronates membership is already active',409);
-   if(!isRazorpayReady(env))return fail('Secure membership payments are not open yet. Please contact the House.',503);
+   if(!isRazorpayReady(env,user))return fail('Secure membership payments are not open yet. Please contact the House.',503);
    if(!await limit(env,'member-pay:'+user.id,5,3600))return fail('Too many checkout attempts',429);
    // Reuse a recently created order, preventing repeat taps from producing multiple charges.
    const latest=await env.DB.prepare("SELECT * FROM hov_membership_payments WHERE user_id=? AND status='created' AND created_at_unix>? ORDER BY created_at_unix DESC LIMIT 1").bind(user.id,stamp()-900).first();
@@ -115,7 +126,7 @@ export async function handleExpansion(req,env,url,deps){
  }
  if(path==='/api/membership/verify'&&method==='POST'){
    const user=await requireUser(req,env);
-   if(!isRazorpayReady(env))return fail('Membership verification unavailable',503);
+   if(!isRazorpayReady(env,user))return fail('Membership verification unavailable',503);
    if(!await limit(env,'member-verify:'+user.id,15,3600))return fail('Too many verification attempts',429);
    const d=await req.json().catch(()=>null);
    if(!d)return fail('Invalid checkout response');
@@ -129,7 +140,7 @@ export async function handleExpansion(req,env,url,deps){
    if(!await verifiedCapturedPayment(env,paymentId,attempt))
       return fail('Payment not yet captured. Membership activates only after verified capture.',409);
    await markMembershipPaid(env,attempt,paymentId);
-   return json({paid:true,membership:'active',lifetime:true});
+   return json({paid:true,membership:isTestTransaction(env)?'test_verified':'active',lifetime:!isTestTransaction(env),testMode:isTestTransaction(env)});
  }
  if(path==='/api/membership/webhook'&&method==='POST'){
    if(!env.RAZORPAY_WEBHOOK_SECRET)return fail('Webhook not configured',503);
@@ -146,7 +157,7 @@ export async function handleExpansion(req,env,url,deps){
    if(!payment?.id||!payment.order_id)return json({accepted:true});
    const attempt=await env.DB.prepare('SELECT * FROM hov_membership_payments WHERE razorpay_order_id=?').bind(payment.order_id).first();
    if(!attempt)return json({accepted:true}); // unrelated Razorpay event
-   if(!isRazorpayReady(env))return fail('Membership verification not configured',503);
+   if(!isRazorpayReady(env,{admin:true}))return fail('Membership verification not configured',503);
    // Webhook signature authenticates notification; API recheck confirms capture and amount.
    if(!await verifiedCapturedPayment(env,payment.id,attempt))return fail('Payment capture not verified',409);
    const eventId=clean(req.headers.get('x-razorpay-event-id'),120);

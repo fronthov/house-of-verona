@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {webcrypto} from 'node:crypto';
 if(!globalThis.crypto)globalThis.crypto=webcrypto;
-import {membershipPriceAt,PROMO_END_AT,hmacHex} from '../src/commerce-expansion.js';
+import {membershipPriceAt,PROMO_END_AT,hmacHex,membershipPaymentMode} from '../src/commerce-expansion.js';
 test('2027 promotional membership boundary uses Indian Standard Time',()=>{
  assert.equal(membershipPriceAt(PROMO_END_AT-1),999);
  assert.equal(membershipPriceAt(PROMO_END_AT),999);
@@ -14,4 +14,24 @@ test('membership signature uses HMAC SHA256, no payment activation by browser',a
  const a=await hmacHex(key,message);
  assert.match(a,/^[a-f0-9]{64}$/);
  assert.notEqual(a,await hmacHex(key,'order_fake|pay_123'));
+});
+
+test('public checkout stays disabled with test keys',()=>{
+ const env={RAZORPAY_KEY_ID:'rzp_test_123',RAZORPAY_KEY_SECRET:'testsecret',RAZORPAY_WEBHOOK_SECRET:'webhook',MEMBERSHIP_TEST_MODE:'true'};
+ assert.equal(membershipPaymentMode(env), 'disabled');
+ assert.equal(membershipPaymentMode(env,{admin:false}), 'disabled');
+ assert.equal(membershipPaymentMode(env,{admin:true}), 'test');
+ env.MEMBERSHIP_PAYMENTS_ENABLED='true';
+ assert.equal(membershipPaymentMode(env,{admin:true}), 'disabled');
+});
+test('live checkout requires live credentials and explicit flag',()=>{
+ const env={RAZORPAY_KEY_ID:'rzp_live_123',RAZORPAY_KEY_SECRET:'livesecret',RAZORPAY_WEBHOOK_SECRET:'webhook'};
+ assert.equal(membershipPaymentMode(env,{admin:true}), 'disabled');
+ env.MEMBERSHIP_PAYMENTS_ENABLED='true';
+ assert.equal(membershipPaymentMode(env,{admin:false}), 'live');
+});
+test('test payments cannot grant live member benefit in the activation routine',()=>{
+ const source=(await import('node:fs')).readFileSync(new URL('../src/commerce-expansion.js',import.meta.url),'utf8');
+ assert.match(source,/if\(!isTestTransaction\(env\)\)queries\.push/);
+ assert.match(source,/test_verified/);
 });

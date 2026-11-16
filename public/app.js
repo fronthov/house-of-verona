@@ -37,7 +37,8 @@ async function openMembership(){
     const body=active?'<p class="notice">Your lifetime Veronates membership is active. Eligible tea and coffee discounts will be applied to your quotes.</p>':
       !user?'<button class="action" id="membershipLogin">Sign in to join</button>':
       !offer.checkoutEnabled?'<p class="notice">Secure lifetime membership payment is being finalized. Membership payment will be enabled only after Razorpay verification is ready.</p>':
-        '<label class="franchise-consent"><input type="checkbox" id="membershipAccept"> I agree to the <a href="/terms.html" target="_blank" rel="noopener">Veronates membership terms</a> and acknowledge the eligibility and refund provisions.</label><button class="action" id="membershipPay">Pay securely with Razorpay</button>';
+        (offer.testMode?'<p class="notice"><strong>FOUNDER TEST ONLY:</strong> This is a simulated Razorpay checkout. No real money is collected, and no lifetime membership is activated by the test.</p>':'')+
+        '<label class="franchise-consent"><input type="checkbox" id="membershipAccept"> I agree to the <a href="/terms.html" target="_blank" rel="noopener">Veronates membership terms</a> and acknowledge the eligibility and refund provisions.</label><button class="action" id="membershipPay">'+(offer.testMode?'Run Razorpay test checkout':'Pay securely with Razorpay')+'</button>';
     open('<div class="eyebrow">VERONATES · THE HOUSE CIRCLE</div><h2>Lifetime membership.</h2>'+
       '<p><strong>'+money(offer.price)+'</strong> as a one-time lifetime membership price. Introductory ₹999 through 27 October 2027, ₹9,999 beginning 28 October 2027. No annual renewal.</p>'+
       '<p>Eligible tea and coffee discounts: 5% from 500 g, 7% from 1 kg, 15% above 2 kg, 25% above 5 kg. Not a blanket discount and not valid on food or books.</p>'+
@@ -70,13 +71,17 @@ async function beginMemberCheckout(){
       prefill:{email:user?.email||''},theme:{color:'#443123'},
       handler:async response=>{
         try{
-          await api('/api/membership/verify',{method:'POST',data:{
+          const verification=await api('/api/membership/verify',{method:'POST',data:{
             razorpay_order_id:response.razorpay_order_id,
             razorpay_payment_id:response.razorpay_payment_id,
             razorpay_signature:response.razorpay_signature
           }});
           await refreshUser();
-          open('<h2>Welcome to Veronates.</h2><p>Your verified lifetime membership is now active. Your eligible discounts appear on your next order quotation.</p><button id="membershipDone" class="action">Go to my account</button>');
+          if(verification.testMode){
+            open('<h2>Razorpay test passed.</h2><p>This was a simulated payment. No real money was taken, and no Veronates lifetime membership was activated. Live checkout requires separate live verification.</p><button id="membershipDone" class="action">Back to account</button>');
+          }else{
+            open('<h2>Welcome to Veronates.</h2><p>Your verified lifetime membership is now active. Your eligible discounts appear on your next order quotation.</p><button id="membershipDone" class="action">Go to my account</button>');
+          }
           $('#membershipDone').onclick=accountView;
         }catch(error){
           status('Verification pending: '+error.message+' If you have paid, please do not pay again. Contact info@houseofverona.in with your Razorpay payment ID.',true);
