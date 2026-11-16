@@ -33,3 +33,19 @@ Public-facing House of Verona name, location and WhatsApp are provided by the fo
 - Founder vision and franchise overview pages have been drafted. Preserve precise Indian-origin claims and premium all-day café positioning.
 - **Do not replace the current wordmark or design packaging until the founder provides the final approved logo artwork.** After upload, update navbar, footer, social OG, favicon, product pack templates and downloadable brand references consistently. Uploaded logo must be a real authorized brand asset.
 - The confidential initial franchise fee must not be stored in the public repository, client JavaScript, static HTML or metadata. Only provide commercial details in response to an explicit prospect request.
+
+## Expanded website release gates (founder, franchise and Veronates)
+- [ ] New public SEO pages /vision.html and /franchise.html and founder homepage section reviewed for accurate claims, typography and mobile layout.
+- [ ] Official final logo file NOT yet supplied. Continue using current provisional text identity until approved master artwork is provided. When received, update all brand touchpoints and package mockups deliberately.
+- [ ] Franchise minimum **800 sq ft**, royalty **2% of total sales yearly**, five-year initial term; keep initial franchise fee confidential in all public files. See FRANCHISE-LEGAL-REVIEW.md.
+- [ ] Grievance Officer Rohit Wanjari, +91 9657452160, info@houseofverona.in. Confirm he accepts direct complaints and test contact inbox and calls.
+- [ ] Review registered ownership/co-founder association with Bulard Pvt. Ltd.; don't represent legal status as verified without records.
+- [ ] Apply sql/expansion.sql to Cloudflare D1 **before** deploying expanded Worker. Back up the production DB first; never remove existing tables.
+- [ ] Add Razorpay key ID, key secret and webhook secret as Cloudflare Worker **secrets**. Never paste API secret into chat, a public Git repo or HTML. Do not assume account activation is complete.
+- [ ] Keep **MEMBERSHIP_PAYMENTS_ENABLED** absent or false until approved by founder, test-mode integration works and webhook delivery is validated. Membership amount is computed on the server and must be checked against the captured payment.
+- [ ] Verify Razorpay signature with server-recorded order ID, verify amount/currency/status via API, test webhook duplicate and out-of-order delivery and refund/chargeback reconciliation. Only then consider live enablement. Consult Razorpay's published checklist: https://razorpay.com/security/checklist/
+- [ ] Confirm member purchase provisions, consent and valid refund rules. Verify opening price ₹999 until 27 October 2027, ₹9,999 from 28 October 2027; lifetime eligibility applies to both.
+- [ ] Confirm franchise email delivery from Resend and application persistence, rate limiting, consent receipt and staff assignment.
+- [ ] Complete review of privacy retention and franchising terms with qualified legal adviser; no agreement is 'loophole-free'.
+- [ ] Run existing and expansion automated tests, production-data migration check, preview browser tests, Razorpay test transactions, security regression tests, website responsive and accessibility tests.
+- [ ] Do not merge into main or redeploy live site automatically before the above conditions and deployment settings are confirmed.
