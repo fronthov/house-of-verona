@@ -30,3 +30,9 @@ test('a fully refunded membership cannot stay active',()=>{
  const card={purchased_at:start,expires_at:oneCalendarYearAfter(start),revoked_at:start+10};
  assert.equal(isAnnualCardActive(card,start+11),false);
 });
+
+test('early-morning IST leap-day purchase ends on 28 February, not 1 March',()=>{
+ const start=Date.parse('2028-02-29T00:30:00+05:30')/1000;
+ const end=Date.parse('2029-02-28T00:30:00+05:30')/1000;
+ assert.equal(oneCalendarYearAfter(start),end);
+});

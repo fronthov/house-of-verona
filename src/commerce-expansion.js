@@ -154,7 +154,7 @@ export async function handleExpansion(req,env,url,deps){
    const name=cardName(input?.name);
    if(name.length<2||/[<>0-9]/.test(name))
      return fail('Enter your full name for the membership card');
-   if(user.membership==='active')return fail('Your lifetime Veronates membership is already active',409);
+   if(user.membership==='active')return fail('Your Veronates membership is already active',409);
    if(!isRazorpayReady(env,user))return fail('Secure membership payments are not open yet. Please contact the House.',503);
    if(!await limit(env,'member-pay:'+user.id,5,3600))return fail('Too many checkout attempts',429);
    // Reuse a recently created order, preventing repeat taps from producing multiple charges.
@@ -166,7 +166,7 @@ export async function handleExpansion(req,env,url,deps){
    }
    const amount=membershipPriceAt()*100,receipt='HOVM-'+rid().replace(/-/g,'').slice(0,25);
    const order=await razorpayRequest(env,'POST','orders',{amount,currency:'INR',receipt,
-     notes:{product:'veronates_lifetime',account_id:user.id}});
+     notes:{product:'veronates_annual',account_id:user.id}});
    if(!/^order_[A-Za-z0-9]+$/.test(String(order.id))||order.amount!==amount||order.currency!=='INR')
       return fail('Payment provider returned an unexpected order',502);
    await env.DB.batch([

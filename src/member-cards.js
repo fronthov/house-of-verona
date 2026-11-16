@@ -3,10 +3,16 @@
 export function oneCalendarYearAfter(purchasedAt) {
  const n=Number(purchasedAt);
  if(!Number.isSafeInteger(n)||n<=0)throw new Error('Invalid membership purchase time');
- const start=new Date(n*1000), year=start.getUTCFullYear()+1,month=start.getUTCMonth();
+ // Convert to local IST wall-clock time before moving the calendar forward.
+ // This matters for leap-day purchases between midnight and 05:29 IST:
+ // UTC would still be 28 February, which incorrectly expires on 1 March.
+ const istSeconds=19800;
+ const local=new Date((n+istSeconds)*1000);
+ const year=local.getUTCFullYear()+1,month=local.getUTCMonth();
  const lastDay=new Date(Date.UTC(year,month+1,0)).getUTCDate();
- return Math.floor(Date.UTC(year,month,Math.min(start.getUTCDate(),lastDay),
-   start.getUTCHours(),start.getUTCMinutes(),start.getUTCSeconds())/1000);
+ const endAsLocalUTC=Date.UTC(year,month,Math.min(local.getUTCDate(),lastDay),
+   local.getUTCHours(),local.getUTCMinutes(),local.getUTCSeconds());
+ return Math.floor(endAsLocalUTC/1000)-istSeconds;
 }
 export const isAnnualCardActive=(card,at=Math.floor(Date.now()/1000))=>
  !!card&&card.revoked_at==null&&Number(card.purchased_at)<=at&&Number(card.expires_at)>at;
