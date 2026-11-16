@@ -38,3 +38,16 @@ test('test payments cannot grant live member benefit in the activation routine',
  assert.match(source,/if\(isTestTransaction\(env\)\)return json/);
  assert.match(source,/test_verified/);
 });
+
+test('live pilot is restricted to founder or explicitly selected pilot email',()=>{
+ const env={
+   RAZORPAY_KEY_ID:'rzp_live_teststub',RAZORPAY_KEY_SECRET:'example',RAZORPAY_WEBHOOK_SECRET:'example',
+   MEMBERSHIP_PAYMENTS_ENABLED:'true',MEMBERSHIP_LIVE_PILOT_ONLY:'true',
+   MEMBERSHIP_LIVE_PILOT_EMAIL:'pilot@example.com'
+ };
+ assert.equal(membershipPaymentMode(env,{admin:false,email:'stranger@example.com'}),'disabled');
+ assert.equal(membershipPaymentMode(env,{admin:true,email:'owner@example.com'}),'live');
+ assert.equal(membershipPaymentMode(env,{admin:false,email:'pilot@example.com'}),'live');
+ env.MEMBERSHIP_LIVE_PILOT_ONLY='false';
+ assert.equal(membershipPaymentMode(env,{admin:false,email:'stranger@example.com'}),'live');
+});
