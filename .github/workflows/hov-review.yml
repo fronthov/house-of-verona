@@ -1,0 +1,35 @@
+name: HoV review checks
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [hov/customer-policies-2026-11]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout candidate code
+        uses: actions/checkout@v4
+      - name: Use Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Check JavaScript syntax
+        run: |
+          node --check src/index.js
+          node --check src/commerce-expansion.js
+          node --check public/app.js
+      - name: Execute business and brand tests
+        run: npm test
+      - name: Verify no franchise fee revealed in public source
+        run: |
+          if grep -RniE '20[[:space:]]*(lakh|lac)|20,00,000|2000000' public src sql; then
+            echo 'Potential confidential franchise fee exposed'
+            exit 1
+          fi
