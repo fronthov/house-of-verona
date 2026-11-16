@@ -39,7 +39,7 @@ Public-facing House of Verona name, location and WhatsApp are provided by the fo
 - [ ] Official final logo file NOT yet supplied. Continue using current provisional text identity until approved master artwork is provided. When received, update all brand touchpoints and package mockups deliberately.
 - [ ] Franchise minimum **800 sq ft**, royalty **2% of total sales yearly**, five-year initial term; keep initial franchise fee confidential in all public files. See FRANCHISE-LEGAL-REVIEW.md.
 - [ ] Grievance Officer Rohit Wanjari, +91 9657452160, info@houseofverona.in. Confirm he accepts direct complaints and test contact inbox and calls.
-- [ ] Review registered ownership/co-founder association with Bulard Pvt. Ltd.; don't represent legal status as verified without records.
+- [ ] Verify the registered legal operator and House of Verona's trademark ownership for public legal disclosures and franchise contracts.
 - [ ] Apply sql/expansion.sql to Cloudflare D1 **before** deploying expanded Worker. Back up the production DB first; never remove existing tables.
 - [ ] Add Razorpay key ID, key secret and webhook secret as Cloudflare Worker **secrets**. Never paste API secret into chat, a public Git repo or HTML. Do not assume account activation is complete.
 - [ ] Keep **MEMBERSHIP_PAYMENTS_ENABLED** absent or false until approved by founder, test-mode integration works and webhook delivery is validated. Membership amount is computed on the server and must be checked against the captured payment.
