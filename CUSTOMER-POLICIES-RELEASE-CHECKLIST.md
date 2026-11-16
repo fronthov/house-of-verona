@@ -28,3 +28,8 @@ Prepared 16 November 2026 on a review branch. **Do not merge into main or deploy
 - FSSAI licensing and specific e-commerce FBO obligations should be validated against the actual legal operating model, not guessed from the café licence. Sources: https://fssai.gov.in/business/registration and https://www.fssai.gov.in/upload/advisories/2026/03/69baca7e9787aCompliance%20Obligation%20ONDC%20Model.pdf
 
 Public-facing House of Verona name, location and WhatsApp are provided by the founder. Registered legal entity identity, legal principal address status, FSSAI number, grievance identity and guaranteed refund timetable remain to be confirmed.
+
+## Brand identity and future logo
+- Founder vision and franchise overview pages have been drafted. Preserve precise Indian-origin claims and premium all-day café positioning.
+- **Do not replace the current wordmark or design packaging until the founder provides the final approved logo artwork.** After upload, update navbar, footer, social OG, favicon, product pack templates and downloadable brand references consistently. Uploaded logo must be a real authorized brand asset.
+- The confidential initial franchise fee must not be stored in the public repository, client JavaScript, static HTML or metadata. Only provide commercial details in response to an explicit prospect request.

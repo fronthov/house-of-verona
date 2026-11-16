@@ -119,3 +119,4 @@ function openFranchiseApplication(){
 }
 $('#membershipBtn').onclick=openMembership;
 if($('#franchiseBtn'))$('#franchiseBtn').onclick=openFranchiseApplication;
+if(new URLSearchParams(location.search).get('franchise')==='apply')setTimeout(openFranchiseApplication,0);

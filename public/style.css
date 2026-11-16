@@ -25,3 +25,8 @@ footer .policy-footer-links{display:flex;gap:14px 24px;flex-wrap:wrap;font-size:
 .hov-honeypot{position:absolute!important;left:-10000px!important;opacity:0!important;pointer-events:none}
 .brand-landing{max-width:900px;margin:0 auto;padding:72px 7%;line-height:1.85}.brand-landing h1{font:400 clamp(39px,5vw,62px)/1.13 Georgia,serif}.brand-landing h2{font:400 31px/1.24 Georgia,serif;margin-top:32px}.brand-landing p{margin:16px 0}
 @media(max-width:780px){.franchise-facts{grid-template-columns:repeat(2,minmax(0,1fr))}.franchise-panel .line-link{display:block;margin:16px 0}}
+
+.brand-landing .brand-lead{font:italic clamp(19px,2.4vw,26px)/1.5 Georgia,serif;color:#866744}
+.brand-landing p{max-width:800px}.brand-landing a:not(.gold-btn){text-decoration:underline;text-underline-offset:3px}
+.brand-landing .gold-btn{display:inline-block;margin:24px 0 14px}
+.franchise-facts-light{color:#34261d}.franchise-facts-light>div{border-top-color:#bda982}.franchise-facts-light strong{color:#84623f}.franchise-facts-light small{color:#695b4e}
