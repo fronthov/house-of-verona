@@ -1,0 +1,6 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {catalog,calculate,discountPercent} from '../src/catalog.js';
+test('all product prices end in 9',()=>{for(const p of catalog)for(const price of Object.values(p.prices))assert.equal(price%10,9,p.name)});
+test('weight discount boundaries',()=>{assert.deepEqual([250,500,1000,2000,2001,5000,5001].map(discountPercent),[0,5,7,7,15,15,25])});
+test('regular house anchor and free delivery threshold',()=>{const products=catalog.map(p=>({...p,enabled:p.enabled!==0}));const a=calculate([{id:'tamil',grams:500,qty:1,roast:'Medium',grind:'Whole bean'}],products,false);assert.equal(a.subtotal,1299);assert.equal(a.shipping,150);const b=calculate([{id:'tamil',grams:1000,qty:1,roast:'Medium',grind:'Whole bean'}],products,true);assert.equal(b.memberDiscountPercent,7);assert.equal(b.discount,161);assert.equal(b.shipping,0);assert.equal(b.total,2138)});
+test('minimum basket enforced',()=>{const products=catalog.map(p=>({...p,enabled:p.enabled!==0}));assert.throws(()=>calculate([{id:'tamil',grams:50,qty:1,roast:'Medium',grind:'Whole bean'}],products,false),/250/)});
+test('book never receives weight discount',()=>{const products=catalog.map(p=>({...p,enabled:true}));const a=calculate([{id:'coffee-book',grams:1,qty:1}],products,true);assert.equal(a.discount,0);assert.equal(a.total,9999)});

@@ -1,12 +1,5 @@
 {
-  "name": "house-of-verona",
-  "version": "0.1.0",
-  "private": true,
-  "engines": { "node": ">=24" },
-  "scripts": {
-    "build": "node scripts/check.mjs",
-    "test": "node tests/pricing.cjs && node tests/accounts.mjs && node tests/commerce.mjs && node tests/cloudflare.mjs",
-    "dev": "npx wrangler@4 dev",
-    "deploy": "npm run build && npx wrangler@4 deploy"
-  }
+  "name":"house-of-verona","private":true,"type":"module","engines":{"node":">=22"},
+  "scripts":{"dev":"wrangler dev","deploy":"wrangler deploy","db:local":"wrangler d1 execute hov-store --local --file=sql/production.sql","db:remote":"wrangler d1 execute hov-store --remote --file=sql/production.sql","test":"node --test tests/*.test.mjs"},
+  "devDependencies":{"wrangler":"^4.50.0"}
 }

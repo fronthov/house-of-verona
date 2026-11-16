@@ -1,23 +1,11 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "house-of-verona",
-  "main": "cloudflare/entry.mjs",
-  "compatibility_date": "2026-11-13",
-  "workers_dev": true,
-  "assets": {
-    "directory": "./public",
-    "binding": "ASSETS",
-    "run_worker_first": true
-  },
-  "vars": {
-    "PREVIEW_ENABLED": "false"
-  },
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "hov-store",
-      "database_id": "5afde4dd-7f21-4ea0-8ba3-f7a45f4cf716",
-      "migrations_dir": "drizzle"
-    }
-  ]
+  "$schema":"node_modules/wrangler/config-schema.json",
+  "name":"house-of-verona",
+  "main":"src/index.js",
+  "compatibility_date":"2026-11-14",
+  "workers_dev":true,
+  "assets":{"directory":"./public","binding":"ASSETS","run_worker_first":["/api/*","/media/*","/product/*","/sitemap.xml"]},
+  "d1_databases":[{"binding":"DB","database_name":"hov-store","database_id":"5afde4dd-7f21-4ea0-8ba3-f7a45f4cf716"}],
+  "r2_buckets":[{"binding":"MEDIA","bucket_name":"hov-media"}],
+  "vars":{"SITE_URL":"https://houseofverona.in","WHATSAPP_NUMBER":"918799817395","STANDARD_SHIPPING_INR":"150","BOOK_SHIPPING_INR":"0","STORE_OPEN":"true"}
 }
