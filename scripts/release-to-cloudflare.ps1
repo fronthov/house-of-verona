@@ -17,6 +17,11 @@ if ($config.d1_databases[0].database_name -ne "hov-store") { throw "Wrong D1 dat
 if ($config.d1_databases[0].database_id -ne "5afde4dd-7f21-4ea0-8ba3-f7a45f4cf716") { throw "Wrong production D1 database ID." }
 if ($config.vars.SITE_URL -ne "https://houseofverona.in") { throw "Wrong SITE_URL." }
 if ($config.vars.STORE_OPEN -ne "true") { throw "Store open state differs from current live site." }
+# Fail closed: never ship payment credentials or webhook secrets as plain-text Wrangler vars.
+$protectedKeys = @("RAZORPAY_KEY_ID", "RAZORPAY_KEY_SECRET", "RAZORPAY_WEBHOOK_SECRET")
+foreach ($key in $protectedKeys) {
+    if ($config.vars.PSObject.Properties.Name -contains $key) { throw "$key must be a Cloudflare Secret, not a wrangler.jsonc vars entry." }
+}
 if ($config.vars.MEMBERSHIP_PAYMENTS_ENABLED -eq "true") { throw "Cannot deploy with membership payments enabled before live payment verification." }
 & npm.cmd test
 if ($LASTEXITCODE -ne 0) { throw "Tests failed. Live Worker unchanged." }
