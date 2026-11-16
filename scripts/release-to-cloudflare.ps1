@@ -9,6 +9,7 @@ function Invoke-HoVCommand([string[]]$Arguments) {
 }
 Write-Host "House of Verona production release preflight" -ForegroundColor Cyan
 if (-not (Test-Path ".\sql\expansion.sql")) { throw "Missing additive D1 expansion schema." }
+if (-not (Test-Path ".\sql\member-cards.sql")) { throw "Missing one-year member-card schema." }
 if (-not (Test-Path ".\public\assets\hov-emblem.webp")) { throw "Missing official HoV emblem." }
 $config = Get-Content ".\wrangler.jsonc" -Raw | ConvertFrom-Json
 if ($config.name -ne "house-of-verona") { throw "Worker name does not match the existing live service." }
@@ -29,6 +30,8 @@ if (-not (Test-Path $backup)) { throw "Database backup was not created. Stop wit
 Write-Host "Database backup: $backup" -ForegroundColor Green
 Write-Host "Applying additive franchise/membership schema..." -ForegroundColor Cyan
 Invoke-HoVCommand -Arguments @("d1", "execute", "hov-store", "--remote", "--file=./sql/expansion.sql")
+Write-Host "Applying idempotent one-year member-card tables..." -ForegroundColor Cyan
+Invoke-HoVCommand -Arguments @("d1", "execute", "hov-store", "--remote", "--file=./sql/member-cards.sql")
 Write-Host "Updating existing Cloudflare Worker, keeping website orders open and membership payments disabled..." -ForegroundColor Cyan
 Invoke-HoVCommand -Arguments @("deploy")
 try {

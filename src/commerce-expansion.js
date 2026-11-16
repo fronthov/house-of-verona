@@ -147,7 +147,7 @@ export async function handleExpansion(req,env,url,deps){
    const user=await requireUser(req,env);
    const input=await req.json().catch(()=>null);
    const name=cardName(input?.name);
-   if(name.length<2||!/^[\\p{L}\\p{M} .'-]+$/u.test(name))
+   if(name.length<2||/[<>0-9]/.test(name))
      return fail('Enter your full name for the membership card');
    if(user.membership==='active')return fail('Your lifetime Veronates membership is already active',409);
    if(!isRazorpayReady(env,user))return fail('Secure membership payments are not open yet. Please contact the House.',503);
