@@ -33,6 +33,8 @@ test('live checkout requires live credentials and explicit flag',()=>{
 });
 test('test payments cannot grant live member benefit in the activation routine',()=>{
  const source=readFileSync(new URL('../src/commerce-expansion.js',import.meta.url),'utf8');
- assert.match(source,/if\(!isTestTransaction\(env\)\)queries\.push/);
+ assert.match(source,/if\(!isTest\)\{/);
+ assert.match(source,/INSERT INTO hov_member_cards/);
+ assert.match(source,/if\(isTestTransaction\(env\)\)return json/);
  assert.match(source,/test_verified/);
 });
