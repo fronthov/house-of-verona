@@ -9,16 +9,16 @@ Prepared 16 November 2026 on a review branch. **Do not merge into main or deploy
 - Orders are submitted as requests; founder approval and manual payment coordination happen before fulfilment. No on-site automated card checkout.
 - House of Verona public support WhatsApp: +91 8799817395.
 - Contact email appears in the current footer as orders@houseofverona.in but its ability to receive mail has **not** been confirmed.
-- Exact café address and map place link have not been verified. Book remains enquiry only.
+- Public-facing location supplied by founder: Beside Aradhya Jewellers, Verona St., Nandanvan, Nagpur, Maharashtra 440024, India. Google Maps: https://maps.app.goo.gl/tVNhdPCAdc9PGngu5. The map destination has not been independently checked. Book remains enquiry only.
 
 ## Must confirm before public promotion and publication
-1. **Verified legal business/trading name** for contracts, invoices and policy disclosure; **complete principal geographic address**.
+1. **Registered legal entity/trading name** for legal policies and invoices still needs verification. Public-facing name: House of Verona. Public location supplied: Beside Aradhya Jewellers, Verona St., Nandanvan, Nagpur, Maharashtra 440024, India. Confirm whether this is the legal principal business address.
 2. **Designated grievance officer name, contact email and number**; operational system to acknowledge complaints within 48 hours and resolve within 1 month.
 3. **Test orders@houseofverona.in** for incoming messages (or replace with a verified support/grievance email). Add a real and reachable email address to contact pages.
 4. Confirm **FSSAI category/licence coverage for online packaged food orders**, seller/packer details, mandated food labelling (FSSAI number, batch, packed-on/best-before, MRP etc. as applicable).
 5. Confirm packaging, eligible PIN codes, carrier shipping/service terms; choose a **specific refund processing timeframe** and a workable refund/return logistics SOP.
 6. Review privacy handling and **document data-retention schedule** / response procedures (email, addresses, orders); third-party service-provider disclosures.
-7. Update generic Instagram and Google Maps links in the homepage before announcing café opening.
+7. Homepage map link updated to the founder-supplied URL; verify its destination and replace the still-generic Instagram link before announcing café opening.
 8. Verify that running a GitHub deployment will **not overwrite** live secrets/bindings or unintentionally change the deployed Cloudflare worker. Check preview and staging tests before merging.
 
 ## Rules and legal research — check current applicability with adviser
@@ -27,4 +27,4 @@ Prepared 16 November 2026 on a review branch. **Do not merge into main or deploy
 - DPDP Rules, 2025 have staged commencement. Source: https://www.meity.gov.in/static/uploads/2025/11/53450e6e5dc0bfa85ebd78686cadad39.pdf
 - FSSAI licensing and specific e-commerce FBO obligations should be validated against the actual legal operating model, not guessed from the café licence. Sources: https://fssai.gov.in/business/registration and https://www.fssai.gov.in/upload/advisories/2026/03/69baca7e9787aCompliance%20Obligation%20ONDC%20Model.pdf
 
-No legal name/address/FSSAI number, verified grievance identity, delivery SLA beyond dispatch, or guaranteed refund timetable has been fabricated in these pages.
+Public-facing House of Verona name, location and WhatsApp are provided by the founder. Registered legal entity identity, legal principal address status, FSSAI number, grievance identity and guaranteed refund timetable remain to be confirmed.
