@@ -19,18 +19,18 @@ if ($config.vars.STORE_OPEN -ne "true") { throw "Store open state differs from c
 if ($config.vars.MEMBERSHIP_PAYMENTS_ENABLED -eq "true") { throw "Cannot deploy with membership payments enabled before live payment verification." }
 & npm.cmd test
 if ($LASTEXITCODE -ne 0) { throw "Tests failed. Live Worker unchanged." }
-Invoke-HoVCommand @("deploy", "--dry-run")
+Invoke-HoVCommand -Arguments @("deploy", "--dry-run")
 Write-Host "Backing up production D1 before additive schema migration..." -ForegroundColor Cyan
 $backupDir = Join-Path $env:USERPROFILE "HoV-Website\backups"
 New-Item -ItemType Directory -Force -Path $backupDir | Out-Null
 $backup = Join-Path $backupDir ("hov-store-" + (Get-Date -Format "yyyyMMdd-HHmmss") + ".sql")
-Invoke-HoVCommand @("d1", "export", "hov-store", "--remote", "--output", $backup)
+Invoke-HoVCommand -Arguments @("d1", "export", "hov-store", "--remote", "--output", $backup)
 if (-not (Test-Path $backup)) { throw "Database backup was not created. Stop without deploying." }
 Write-Host "Database backup: $backup" -ForegroundColor Green
 Write-Host "Applying additive franchise/membership schema..." -ForegroundColor Cyan
-Invoke-HoVCommand @("d1", "execute", "hov-store", "--remote", "--file=./sql/expansion.sql")
+Invoke-HoVCommand -Arguments @("d1", "execute", "hov-store", "--remote", "--file=./sql/expansion.sql")
 Write-Host "Updating existing Cloudflare Worker, keeping website orders open and membership payments disabled..." -ForegroundColor Cyan
-Invoke-HoVCommand @("deploy")
+Invoke-HoVCommand -Arguments @("deploy")
 try {
     $response = Invoke-RestMethod -Uri "https://houseofverona.in/api/health" -TimeoutSec 20
     if ($response.healthy -ne $true -or $response.storeOpen -ne $true) { throw "Unexpected health response." }
