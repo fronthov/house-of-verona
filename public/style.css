@@ -30,3 +30,24 @@ footer .policy-footer-links{display:flex;gap:14px 24px;flex-wrap:wrap;font-size:
 .brand-landing p{max-width:800px}.brand-landing a:not(.gold-btn){text-decoration:underline;text-underline-offset:3px}
 .brand-landing .gold-btn{display:inline-block;margin:24px 0 14px}
 .franchise-facts-light{color:#34261d}.franchise-facts-light>div{border-top-color:#bda982}.franchise-facts-light strong{color:#84623f}.franchise-facts-light small{color:#695b4e}
+
+/* Founder-approved House of Verona green-and-gold muse identity */
+header .hov-header-logo{gap:11px;min-width:0}.hov-logo{display:block;flex-shrink:0;width:52px;height:52px;object-fit:cover;border-radius:50%;background:#05271a;border:1px solid #cba35d}
+.hov-header-logo .brand-wordmark{display:flex;flex-direction:column;font-size:14px;line-height:1.15;letter-spacing:.15em}
+.hov-header-logo .brand-wordmark small{font-size:8px;letter-spacing:.19em;margin-top:6px;color:#947044}
+.hov-footer-logo{align-self:flex-start;width:max-content}.hov-footer-logo .hov-logo{width:48px;height:48px}.hov-footer-logo .brand-wordmark small{color:#c7a67b}
+.hov-book-emblem,.hov-member-logo{display:block;object-fit:cover;border-radius:50%;border:1px solid #b88d4b}
+.hov-book-emblem{width:86px;height:86px;box-shadow:0 8px 18px #0004}.hov-member-logo{width:76px;height:76px}
+.product-art .pack img.hov-pack-logo{display:block;width:48px;height:48px;object-fit:cover;border-radius:50%;flex-shrink:0;border:1px solid #d9b777}
+.pack{justify-content:space-between;padding:10px 8px 12px}.pack strong{font-size:15px;line-height:1.1}
+.hov-origins-section{background:#f6f1e8}
+.hov-origin-subhead{margin:35px 0 15px;display:flex;justify-content:space-between;align-items:baseline;gap:15px;border-bottom:1px solid #d4c5b1;padding-bottom:12px}
+.hov-origin-subhead h3{font:400 clamp(24px,3vw,31px) Georgia,serif;margin:0}.hov-origin-subhead span{font-size:10px;letter-spacing:.16em;color:#8e6d46}
+.hov-origins-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.hov-origin-card{padding:23px 21px 25px;background:#fffdf8;border:1px solid #ded1bf;min-height:225px}
+.origin-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px}.origin-kind{letter-spacing:.19em;font-size:10px;font-weight:700;color:#967145}
+.origin-number{font:italic 17px Georgia,serif;color:#b6a18c}.hov-origin-card h3{font:400 27px Georgia,serif;line-height:1.2;margin:0 0 8px}
+.origin-place{font-size:13px;font-weight:700;color:#6b482b;margin-bottom:13px}.hov-origin-card p{color:#76685b;line-height:1.7;font-size:13px;margin:0}
+.origin-disclaimer{margin:28px 0;color:#6e6256;font-size:12px;line-height:1.8;max-width:850px}
+@media(max-width:1060px){header .hov-header-logo .brand-wordmark{font-size:12px;letter-spacing:.09em}.hov-origins-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:680px){.hov-logo{width:42px;height:42px}.hov-header-logo .brand-wordmark{font-size:10px!important}.hov-header-logo .brand-wordmark small{font-size:7px}.hov-origins-grid{grid-template-columns:1fr}.hov-origin-subhead{flex-direction:column;gap:6px}.hov-origin-card{min-height:0}.hov-footer-logo .hov-logo{width:44px;height:44px}}

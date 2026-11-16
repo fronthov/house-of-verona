@@ -49,3 +49,8 @@ Public-facing House of Verona name, location and WhatsApp are provided by the fo
 - [ ] Complete review of privacy retention and franchising terms with qualified legal adviser; no agreement is 'loophole-free'.
 - [ ] Run existing and expansion automated tests, production-data migration check, preview browser tests, Razorpay test transactions, security regression tests, website responsive and accessibility tests.
 - [ ] Do not merge into main or redeploy live site automatically before the above conditions and deployment settings are confirmed.
+
+## Uploaded founder logo / origins
+- Approved gold-on-deep-green logo is committed as an optimized `public/assets/hov-emblem.webp`. Original 1254px PNG remains the print-artwork source; do not upscale small web image for physical packages.
+- The asset is applied to nav/footer, page favicons and OG image metadata, product display mockups, Veronates and founder book.
+- Nine origin examples: Chikkamagaluru, Wayanad, Yercaud, Araku Valley; Dibrugarh, Darjeeling, Temi, Namsai and Kangra. These are geography examples, NOT unverified stock/supplier claims.

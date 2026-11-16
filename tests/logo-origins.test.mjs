@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';
+const read=p=>readFileSync(new URL(p,import.meta.url),'utf8');
+test('all nine public pages display the official logo',()=>{for(const n of ['index','vision','franchise','shipping','returns-refunds','cancellation','privacy','terms','support']){const s=read('../public/'+n+'.html');assert.match(s,/\/assets\/hov-emblem\.webp/);assert.match(s,/hov-header-logo/);assert.match(s,/hov-footer-logo/)}});
+test('one named area for each of four coffee and five tea states',()=>{const s=read('../public/index.html');assert.equal((s.match(/class="hov-origin-card"/g)||[]).length,9);for(const v of ['Chikkamagaluru','Wayanad','Yercaud','Araku Valley','Dibrugarh','Darjeeling','Temi','Namsai','Kangra'])assert.ok(s.includes(v),v);assert.match(s,/do not imply that House of Verona currently stocks each origin/);});
+test('member, book and package mockups show same emblem',()=>{assert.match(read('../public/index.html'),/hov-member-logo/);assert.match(read('../public/index.html'),/hov-book-emblem/);assert.match(read('../public/app.js'),/hov-pack-logo/);});
