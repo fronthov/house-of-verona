@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {webcrypto} from 'node:crypto';
 if(!globalThis.crypto)globalThis.crypto=webcrypto;
 import {membershipPriceAt,PROMO_END_AT,hmacHex,membershipPaymentMode} from '../src/commerce-expansion.js';
@@ -31,7 +32,7 @@ test('live checkout requires live credentials and explicit flag',()=>{
  assert.equal(membershipPaymentMode(env,{admin:false}), 'live');
 });
 test('test payments cannot grant live member benefit in the activation routine',()=>{
- const source=(await import('node:fs')).readFileSync(new URL('../src/commerce-expansion.js',import.meta.url),'utf8');
+ const source=readFileSync(new URL('../src/commerce-expansion.js',import.meta.url),'utf8');
  assert.match(source,/if\(!isTestTransaction\(env\)\)queries\.push/);
  assert.match(source,/test_verified/);
 });
