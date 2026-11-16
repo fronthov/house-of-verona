@@ -22,6 +22,8 @@ jobs:
         run: |
           node --check src/index.js
           node --check src/commerce-expansion.js
+          node --check src/member-cards.js
+          node --check public/member-card.js
           node --check public/app.js
       - name: Execute business and brand tests
         run: npm test

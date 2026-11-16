@@ -54,3 +54,11 @@ Public-facing House of Verona name, location and WhatsApp are provided by the fo
 - Approved gold-on-deep-green logo is committed as an optimized `public/assets/hov-emblem.webp`. Original 1254px PNG remains the print-artwork source; do not upscale small web image for physical packages.
 - The asset is applied to nav/footer, page favicons and OG image metadata, product display mockups, Veronates and founder book.
 - Nine origin examples: Chikkamagaluru, Wayanad, Yercaud, Araku Valley; Dibrugarh, Darjeeling, Temi, Namsai and Kangra. These are geography examples, NOT unverified stock/supplier claims.
+
+## One-year card change, 16 November 2026
+- New paid Veronates membership is one calendar year, superseding earlier lifetime marketing. INR 999 through 27 Oct 2027; INR 9999 from 28 Oct 2027 for one year. No automatic renewal.
+- D1 sql/member-cards.sql must run before production Worker deployment.
+- Verified captured live payment generates named unique digital card with start/end timestamps, automatic Resend email attempt and member account link.
+- Expired/revoked cards cannot grant discounts; payment.refunded must be subscribed in Razorpay Live Webhooks.
+- Pilot real-money checkout is limited to founder or configured pilot member until verified. Merchant keys remain private in Cloudflare.
+- See RAZORPAY-MEMBERSHIP-RELEASE.md for controlled activation steps.
