@@ -8,13 +8,13 @@ Prepared 16 November 2026 on a review branch. **Do not merge into main or deploy
 - Tea+coffee baskets require 250 g eligible weight; combined-weight Veronates member pricing applies with thresholds exactly as defined in src/catalog.js.
 - Orders are submitted as requests; founder approval and manual payment coordination happen before fulfilment. No on-site automated card checkout.
 - House of Verona public support WhatsApp: +91 8799817395.
-- Contact email appears in the current footer as orders@houseofverona.in but its ability to receive mail has **not** been confirmed.
+- Founder-designated public email for all general information, orders, support and franchise enquiries: info@houseofverona.in. Same WhatsApp number for all: +91 8799817395. Inbox delivery has **not** been independently tested.
 - Public-facing location supplied by founder: Beside Aradhya Jewellers, Verona St., Nandanvan, Nagpur, Maharashtra 440024, India. Google Maps: https://maps.app.goo.gl/tVNhdPCAdc9PGngu5. The map destination has not been independently checked. Book remains enquiry only.
 
 ## Must confirm before public promotion and publication
 1. **Registered legal entity/trading name** for legal policies and invoices still needs verification. Public-facing name: House of Verona. Public location supplied: Beside Aradhya Jewellers, Verona St., Nandanvan, Nagpur, Maharashtra 440024, India. Confirm whether this is the legal principal business address.
 2. **Designated grievance officer name, contact email and number**; operational system to acknowledge complaints within 48 hours and resolve within 1 month.
-3. **Test orders@houseofverona.in** for incoming messages (or replace with a verified support/grievance email). Add a real and reachable email address to contact pages.
+3. **Send a test message to info@houseofverona.in** and confirm replies arrive. The founder designated this address for general information, franchise and customer support, and +91 8799817395 as the shared WhatsApp number.
 4. Confirm **FSSAI category/licence coverage for online packaged food orders**, seller/packer details, mandated food labelling (FSSAI number, batch, packed-on/best-before, MRP etc. as applicable).
 5. Confirm packaging, eligible PIN codes, carrier shipping/service terms; choose a **specific refund processing timeframe** and a workable refund/return logistics SOP.
 6. Review privacy handling and **document data-retention schedule** / response procedures (email, addresses, orders); third-party service-provider disclosures.
