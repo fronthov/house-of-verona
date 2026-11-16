@@ -14,7 +14,7 @@ function status(m,error=false){const el=$('#status');if(el){el.textContent=m;el.
 async function quoteView(){try{const q=await api('/api/quote',{method:'POST',data:{items:cart}});open(`<div class="eyebrow">REVIEW YOUR ORDER</div><h2>Your summary.</h2><div class="totalrow"><span>Items</span><strong>${money(q.subtotal)}</strong></div><div class="totalrow"><span>Veronates savings (${q.memberDiscountPercent}%)</span><strong>−${money(q.discount)}</strong></div><div class="totalrow"><span>Shipping</span><strong>${q.shipping===0?'Free':money(q.shipping)}</strong></div><hr><div class="totalrow"><strong>Total to confirm</strong><strong>${money(q.total)}</strong></div><p>${q.eligibleWeight} g eligible tea and coffee. Free bean/tea shipping when post-discount subtotal is above ₹1,999.</p><div class="notice">No payment is collected now. Your request is saved and sent to WhatsApp for founder approval. Final shipping coverage and stock are confirmed before payment.</div><p class="policy-checkout">Please review our <a href="/shipping.html" target="_blank" rel="noopener">Shipping</a>, <a href="/returns-refunds.html" target="_blank" rel="noopener">Returns</a>, <a href="/cancellation.html" target="_blank" rel="noopener">Cancellation</a>, <a href="/terms.html" target="_blank" rel="noopener">Terms</a> and <a href="/privacy.html" target="_blank" rel="noopener">Privacy</a> policies.</p>${!user?'<p>Sign in first to save your order and access order history.</p><button id="loginCheckout" class="action">Sign in to continue</button>':!storeOpen?'<p class="error">Ordering has not been enabled by the founder yet.</p>':`<label class="field">Full name<input id="shipName" autocomplete="name"></label><label class="field">Phone / WhatsApp<input id="shipPhone" type="tel" autocomplete="tel"></label><label class="field">Delivery address<textarea id="shipAddress" rows="3" autocomplete="street-address"></textarea></label><label class="field">PIN code<input id="shipPin" inputmode="numeric" maxlength="6" autocomplete="postal-code"></label><button id="place" class="action">Save order & open WhatsApp</button>`}<p id="status" role="status"></p>`);if($('#loginCheckout'))$('#loginCheckout').onclick=()=>login(true);if($('#place'))$('#place').onclick=async()=>{const btn=$('#place');btn.disabled=true;try{const data=await api('/api/orders',{method:'POST',data:{items:cart,name:$('#shipName').value,phone:$('#shipPhone').value,address:$('#shipAddress').value,pincode:$('#shipPin').value}});cart=[];persist();open(`<h2>Order request saved.</h2><p>Reference: <strong>${esc(data.id)}</strong></p><p>Estimated total: <strong>${money(data.total)}</strong></p><div class="notice">Tap below to send the prepared message to House of Verona. Your request is not approved or paid until we confirm it.</div><a class="gold-btn" href="${esc(data.whatsappUrl)}" target="_blank" rel="noopener">Send order on WhatsApp</a><p>Your order is also visible under Account → Order History.</p>`);window.open(data.whatsappUrl,'_blank','noopener')}catch(e){status(e.message,true);btn.disabled=false}}}catch(e){toast(e.message)}}
 function login(after=false){open(`<div class="eyebrow">HOUSE OF VERONA ACCOUNT</div><h2>Welcome back.</h2><p>Sign in using a secure code emailed to you. No password to remember.</p><label class="field">Email address<input id="loginEmail" type="email" autocomplete="email"></label><button id="sendCode" class="action">Email my sign-in code</button><p id="status"></p>`);$('#sendCode').onclick=async()=>{const email=$('#loginEmail').value;$('#sendCode').disabled=true;try{await api('/api/auth/request',{method:'POST',data:{email}});open(`<h2>Check your email.</h2><p>A six-digit code was sent to ${esc(email)}. It expires in 10 minutes.</p><label class="field">Six-digit code<input id="loginCode" inputmode="numeric" maxlength="6" autocomplete="one-time-code"></label><button id="verifyCode" class="action">Verify & sign in</button><p id="status"></p>`);$('#verifyCode').onclick=async()=>{try{await api('/api/auth/verify',{method:'POST',data:{email,code:$('#loginCode').value}});await refreshUser();toast('Signed in successfully');after?quoteView():accountView()}catch(e){status(e.message,true)}}}catch(e){status(e.message,true);$('#sendCode').disabled=false}}}
 async function refreshUser(){const d=await api('/api/me');user=d.user;$('#accountBtn').textContent=user?'My Account':'Account'}
-async function accountView(){if(!user)return login();open(`<div class="eyebrow">YOUR HOUSE OF VERONA</div><h2>My account.</h2><p>${esc(user.email)}</p><div class="notice">Veronates status: <strong>${esc(user.membership)}</strong>. Only verified active members receive quantity discounts.</div><button id="history" class="action">My order history</button> ${user.admin?'<button id="admin" class="outline">Founder dashboard</button>':''}<button id="logout" class="outline">Sign out</button><p id="status"></p>`);$('#history').onclick=orderHistory;if($('#admin'))$('#admin').onclick=adminView;$('#logout').onclick=async()=>{await api('/api/auth/logout',{method:'POST'});await refreshUser();$('#dialog').close();toast('Signed out')}}
+async function accountView(){if(!user)return login();open(`<div class="eyebrow">YOUR HOUSE OF VERONA</div><h2>My account.</h2><p>${esc(user.email)}</p><div class="notice">Veronates status: <strong>${esc(user.membership)}</strong>. Only verified active members receive quantity discounts.</div><button id="history" class="action">My order history</button><button id="accountMembership" class="outline">Veronates membership</button> ${user.admin?'<button id="admin" class="outline">Founder dashboard</button>':''}<button id="logout" class="outline">Sign out</button><p id="status"></p>`);$('#history').onclick=orderHistory;if($('#admin'))$('#admin').onclick=adminView;$('#logout').onclick=async()=>{await api('/api/auth/logout',{method:'POST'});await refreshUser();$('#dialog').close();toast('Signed out')}}
 async function orderHistory(){try{const d=await api('/api/orders/mine');open(`<div class="eyebrow">YOUR ORDERS</div><h2>Order history.</h2>${d.orders.length?d.orders.map(o=>`<div class="cart-line"><div><strong>${esc(o.id)}</strong><small>${esc(o.created_at)} · ${esc(o.status)}</small><small>${o.lines.map(x=>esc(x.name)+' × '+x.qty).join(', ')}</small>${o.payment_link?`<a href="${esc(o.payment_link)}" target="_blank" rel="noopener">Approved payment link</a>`:''}</div><strong>${money(o.total)}</strong></div>`).join(''):'<p>There are no orders on your account yet.</p>'}<button class="outline" id="backAcct">Back to account</button>`);$('#backAcct').onclick=accountView}catch(e){toast(e.message)}}
 async function adminView(){try{const [orders,prods]=await Promise.all([api('/api/admin/orders'),api('/api/admin/products')]);open(`<div class="eyebrow">FOUNDER PRIVATE OPERATIONS</div><h2>Store dashboard.</h2><p>${orders.orders.length} recorded orders · ${prods.products.length} catalogue entries</p><button class="action" id="adminOrders">Review orders</button><button class="outline" id="adminProducts">Product & price editor</button><button class="outline" id="adminPhotos">Upload photos</button><button class="outline" id="adminMembers">Veronates membership</button>`);$('#adminOrders').onclick=()=>adminOrders(orders.orders);$('#adminProducts').onclick=()=>adminProducts(prods.products);$('#adminPhotos').onclick=adminPhotos;$('#adminMembers').onclick=adminMembers}catch(e){toast(e.message)}}
 function adminOrders(orders){open(`<h2>Founder order review.</h2>${orders.length?orders.map(o=>`<div class="cart-line"><div><strong>${esc(o.id)} · ${money(o.total)}</strong><small>${esc(o.customer_name)} · ${esc(o.email)} · ${esc(o.phone)}</small><small>${esc(o.address)} ${esc(o.pincode)}</small><p class="order-lines">${o.lines.map(x=>esc(x.name)+' '+x.grams+'g × '+x.qty).join('<br>')}</p><small>Current: ${esc(o.status)}</small><label class="field">Update status<select id="s-${esc(o.id)}">${['awaiting_whatsapp','pending_review','approved','payment_pending','paid','packed','shipped','delivered','cancelled'].map(s=>`<option ${o.status===s?'selected':''}>${s}</option>`).join('')}</select></label><label class="field">Payment link (optional)<input id="link-${esc(o.id)}" value="${esc(o.payment_link||'')}"></label><label class="field">Payment reference (optional)<input id="ref-${esc(o.id)}" value="${esc(o.payment_reference||'')}"></label><button class="action" data-save-order="${esc(o.id)}">Save review</button></div></div>`).join(''):'<p>No orders yet.</p>'}<button class="outline" id="backAdmin">Back</button><p id="status"></p>`);document.querySelectorAll('[data-save-order]').forEach(b=>b.onclick=async()=>{try{const id=b.dataset.saveOrder;await api('/api/admin/orders/update',{method:'POST',data:{id,status:document.getElementById('s-'+id).value,paymentLink:document.getElementById('link-'+id).value,paymentReference:document.getElementById('ref-'+id).value}});status('Saved');}catch(e){status(e.message,true)}});$('#backAdmin').onclick=adminView}
@@ -24,3 +24,98 @@ function adminPhotos(){open(`<h2>Photo studio.</h2><p>Select a JPG, PNG or WEBP 
 async function loadCatalog(){const r=await api('/api/catalog');products=r.products;storeOpen=r.storeOpen;showProducts()}
 async function loadGallery(){try{const r=await api('/api/gallery');$('#galleryItems').innerHTML=r.images.length?r.images.map(i=>`<figure style="margin:0"><img loading="lazy" src="${esc(i.url)}" alt="${esc(i.caption||'House of Verona gallery image')}"><figcaption style="font-size:12px;color:#83786c;margin-top:6px">${esc(i.caption)}</figcaption></figure>`).join(''):'<div class="gallery-placeholder">Our gallery is being curated.</div>'}catch{}}
 $('#accountBtn').onclick=accountView;$('#bagBtn').onclick=cartView;$('#membershipBtn').onclick=()=>{if(user)accountView();else login()};$('#year').textContent=new Date().getFullYear();persist();Promise.allSettled([loadCatalog(),loadGallery(),refreshUser()]).then(results=>{if(results[0].status==='rejected'){$('#products').innerHTML='<p class="error">Collection temporarily unavailable. Please contact House of Verona.</p>';console.error(results[0].reason)}});
+
+
+/* Veronates and franchise interactions extend the existing signed-in customer experience. */
+document.addEventListener('click',event=>{
+  if(event.target?.id==='accountMembership')openMembership();
+});
+async function openMembership(){
+  try{
+    const offer=await api('/api/membership/offer');
+    const active=offer.memberActive;
+    const body=active?'<p class="notice">Your lifetime Veronates membership is active. Eligible tea and coffee discounts will be applied to your quotes.</p>':
+      !user?'<button class="action" id="membershipLogin">Sign in to join</button>':
+      !offer.checkoutEnabled?'<p class="notice">Secure lifetime membership payment is being finalized. Membership payment will be enabled only after Razorpay verification is ready.</p>':
+        '<label class="franchise-consent"><input type="checkbox" id="membershipAccept"> I agree to the <a href="/terms.html" target="_blank" rel="noopener">Veronates membership terms</a> and acknowledge the eligibility and refund provisions.</label><button class="action" id="membershipPay">Pay securely with Razorpay</button>';
+    open('<div class="eyebrow">VERONATES · THE HOUSE CIRCLE</div><h2>Lifetime membership.</h2>'+
+      '<p><strong>'+money(offer.price)+'</strong> as a one-time lifetime membership price. Introductory ₹999 through 27 October 2027, ₹9,999 beginning 28 October 2027. No annual renewal.</p>'+
+      '<p>Eligible tea and coffee discounts: 5% from 500 g, 7% from 1 kg, 15% above 2 kg, 25% above 5 kg. Not a blanket discount and not valid on food or books.</p>'+
+      body+'<p id="status" role="status"></p>');
+    if($('#membershipLogin'))$('#membershipLogin').onclick=()=>login();
+    if($('#membershipPay'))$('#membershipPay').onclick=beginMemberCheckout;
+  }catch(error){toast(error.message)}
+}
+let rzpLoader;
+function getRazorpay(){
+  if(window.Razorpay)return Promise.resolve(window.Razorpay);
+  if(!rzpLoader)rzpLoader=new Promise((resolve,reject)=>{
+    const script=document.createElement('script');script.src='https://checkout.razorpay.com/v1/checkout.js';
+    script.async=true;
+    script.onload=()=>window.Razorpay?resolve(window.Razorpay):reject(new Error('Unable to initialize Razorpay'));
+    script.onerror=()=>reject(new Error('Secure checkout could not load'));
+    document.head.appendChild(script);
+  });
+  return rzpLoader;
+}
+async function beginMemberCheckout(){
+  const accept=$('#membershipAccept');
+  if(accept&&!accept.checked){status('Please review and accept the membership terms.',true);return}
+  const button=$('#membershipPay');if(button)button.disabled=true;
+  try{
+    const order=await api('/api/membership/checkout',{method:'POST',data:{}});
+    const Razorpay=await getRazorpay();
+    const checkout=new Razorpay({key:order.keyId,order_id:order.orderId,amount:order.amount,currency:'INR',
+      name:'House of Verona',description:'Veronates Lifetime Membership',
+      prefill:{email:user?.email||''},theme:{color:'#443123'},
+      handler:async response=>{
+        try{
+          await api('/api/membership/verify',{method:'POST',data:{
+            razorpay_order_id:response.razorpay_order_id,
+            razorpay_payment_id:response.razorpay_payment_id,
+            razorpay_signature:response.razorpay_signature
+          }});
+          await refreshUser();
+          open('<h2>Welcome to Veronates.</h2><p>Your verified lifetime membership is now active. Your eligible discounts appear on your next order quotation.</p><button id="membershipDone" class="action">Go to my account</button>');
+          $('#membershipDone').onclick=accountView;
+        }catch(error){
+          status('Verification pending: '+error.message+' If you have paid, please do not pay again. Contact info@houseofverona.in with your Razorpay payment ID.',true);
+        }
+      },modal:{ondismiss:()=>{const b=$('#membershipPay');if(b)b.disabled=false}}});
+    checkout.open();
+  }catch(error){status(error.message,true);if(button)button.disabled=false}
+}
+function openFranchiseApplication(){
+  open('<div class="eyebrow">FRANCHISE PARTNERSHIPS</div><h2>Apply to join the House.</h2>'+
+    '<p>This is a non-binding expression of interest. Proposed minimum outlet area: <strong>800 sq ft</strong>. Initial proposed term: <strong>five years</strong>. Proposed annual royalty: <strong>2% of total sales</strong>, with the calculation method defined in a final agreement. Commercial fees are shared privately upon specific request.</p>'+
+    '<form id="hovFranchiseForm">'+
+    '<label class="field">Full name *<input name="name" required maxlength="90" autocomplete="name"></label>'+
+    '<label class="field">Email *<input name="email" type="email" required maxlength="180" autocomplete="email"></label>'+
+    '<label class="field">Contact phone *<input name="phone" type="tel" required maxlength="25" autocomplete="tel"></label>'+
+    '<label class="field">Preferred city *<input name="city" required maxlength="100"></label>'+
+    '<label class="field">State *<input name="state" required maxlength="90"></label>'+
+    '<label class="field">Proposed site area in sq ft (minimum 800) *<input name="areaSqft" type="number" required min="800" max="100000" step="1" placeholder="800"></label>'+
+    '<label class="field">Site type *<select name="locationType" required><option value="">Choose</option><option>High-street retail</option><option>Shopping centre</option><option>Business district</option><option>Independent building</option><option>Other commercial site</option></select></label>'+
+    '<label class="field">Estimated investment capacity *<select name="investment" required><option value="">Choose</option><option>Under ₹50 lakh</option><option>₹50 lakh – ₹1 crore</option><option>₹1 crore – ₹2 crore</option><option>Above ₹2 crore</option><option>To be assessed</option></select></label>'+
+    '<label class="field">Relevant business or hospitality experience *<textarea name="experience" required rows="3" minlength="10" maxlength="800"></textarea></label>'+
+    '<label class="field">Your proposal (optional)<textarea name="notes" rows="3" maxlength="1200"></textarea></label>'+
+    '<label class="franchise-consent"><input name="consent" type="checkbox" required> I agree to House of Verona processing the details submitted to assess my franchise enquiry under the <a href="/privacy.html" target="_blank" rel="noopener">Privacy Policy</a>.</label>'+
+    '<input class="hov-honeypot" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">'+
+    '<p class="fineprint">The enquiry is free. There is no guaranteed approval, territory reservation, investment return or agreement until due diligence and a signed contract.</p>'+
+    '<button id="hovFranchiseSubmit" class="action" type="submit">Send franchise enquiry</button><p id="status" role="status"></p></form>');
+  $('#hovFranchiseForm').onsubmit=async event=>{
+    event.preventDefault();
+    const button=$('#hovFranchiseSubmit');button.disabled=true;
+    const f=new FormData(event.target);
+    const data=Object.fromEntries(f.entries());
+    data.areaSqft=Number(f.get('areaSqft'));
+    data.consent=f.get('consent')==='on';
+    try{
+      const result=await api('/api/franchise/enquiry',{method:'POST',data});
+      open('<h2>Your enquiry is recorded.</h2><p>Reference: <strong>'+esc(result.reference||'Recorded')+'</strong></p><p>'+esc(result.message)+'</p>'+
+        '<p>Contact <a href="mailto:info@houseofverona.in">info@houseofverona.in</a> or WhatsApp <a href="https://wa.me/918799817395">+91 8799817395</a> for follow-up.</p>');
+    }catch(error){status(error.message,true);button.disabled=false}
+  };
+}
+$('#membershipBtn').onclick=openMembership;
+if($('#franchiseBtn'))$('#franchiseBtn').onclick=openFranchiseApplication;
