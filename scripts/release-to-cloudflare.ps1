@@ -23,11 +23,13 @@ $protectedKeys = @("RAZORPAY_KEY_ID", "RAZORPAY_KEY_SECRET", "RAZORPAY_WEBHOOK_S
 foreach ($key in $protectedKeys) {
     if ($config.vars.PSObject.Properties.Name -contains $key) { throw "$key must be a Cloudflare Secret, not a wrangler.jsonc vars entry." }
 }
-# The general release is restricted to a controlled live pilot.
-# Public checkout must be opened only by scripts/activate-public-memberships.ps1
-# after verifying an actual paid, emailed one-year card in production D1.
-if ($config.vars.MEMBERSHIP_PAYMENTS_ENABLED -ne "true" -or $config.vars.MEMBERSHIP_LIVE_PILOT_ONLY -ne "true") {
-    throw "This release requires live payments ENABLED but PILOT_ONLY true. Use the public activation script after a verified pilot payment."
+# Public membership activation is tracked in source after the controlled live pilot.
+# Keep payment flags explicit, and continue deploying only to this same Worker.
+if ($config.vars.MEMBERSHIP_PAYMENTS_ENABLED -ne "true") {
+    throw "Membership payments must be explicitly enabled in the reviewed configuration."
+}
+if (@("true","false") -cnotcontains [string]$config.vars.MEMBERSHIP_LIVE_PILOT_ONLY) {
+    throw "MEMBERSHIP_LIVE_PILOT_ONLY must be an explicit text value true or false."
 }
 & npm.cmd test
 if ($LASTEXITCODE -ne 0) { throw "Tests failed. Live Worker unchanged." }
@@ -43,7 +45,7 @@ Write-Host "Applying additive franchise/membership schema..." -ForegroundColor C
 Invoke-HoVCommand -Arguments @("d1", "execute", "hov-store", "--remote", "--file=./sql/expansion.sql")
 Write-Host "Applying idempotent one-year member-card tables..." -ForegroundColor Cyan
 Invoke-HoVCommand -Arguments @("d1", "execute", "hov-store", "--remote", "--file=./sql/member-cards.sql")
-Write-Host "Updating the existing Cloudflare Worker with live payments restricted to the selected pilot..." -ForegroundColor Cyan
+Write-Host "Updating the existing Cloudflare Worker with configured membership access..." -ForegroundColor Cyan
 Invoke-HoVCommand -Arguments @("deploy")
 try {
     $response = Invoke-RestMethod -Uri "https://houseofverona.in/api/health" -TimeoutSec 20
@@ -58,8 +60,9 @@ try {
     if ($offer.annual -ne $true -or $offer.price -ne 999) {
         throw "Expected annual=true and introductory price=999 in membership offer."
     }
-    if ($offer.checkoutEnabled -ne $false) {
-        throw "Anonymous membership checkout unexpectedly enabled; review pilot restrictions."
+    $expectedPublicCheckout = $config.vars.MEMBERSHIP_LIVE_PILOT_ONLY -eq "false"
+    if ($offer.checkoutEnabled -ne $expectedPublicCheckout) {
+        throw "Membership checkout does not match configured pilot/public access."
     }
     $cardPage = Invoke-WebRequest -Uri "https://houseofverona.in/membership-card.html" -UseBasicParsing -TimeoutSec 25
     if ($cardPage.StatusCode -ne 200 -or -not $cardPage.Content.Contains("VERONATES")) {
@@ -69,5 +72,8 @@ try {
 } catch {
     Write-Warning "Annual membership smoke test failed; keep public payments disabled: $($_.Exception.Message)"
 }
-Write-Host "Pilot release finished. Public membership payments remain RESTRICTED until a captured live payment, card and email are verified." -ForegroundColor Yellow
-Write-Host "After a real pilot payment and confirmed member email, run scripts/activate-public-memberships.ps1 to open checkout to all customers." -ForegroundColor Yellow
+if ($config.vars.MEMBERSHIP_LIVE_PILOT_ONLY -eq "false") {
+    Write-Host "Public release finished. One-year Razorpay memberships should be available to all signed-in users." -ForegroundColor Green
+} else {
+    Write-Host "Pilot release finished. Checkout remains restricted to authorised pilot accounts." -ForegroundColor Yellow
+}

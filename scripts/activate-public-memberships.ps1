@@ -10,8 +10,8 @@ if ($config.d1_databases[0].database_name -ne "hov-store") { throw "Wrong D1 dat
 if ($config.vars.STORE_OPEN -ne "true") { throw "Website store is not enabled." }
 if ($config.keep_vars -ne $true) { throw "keep_vars needs to be true." }
 if ($config.vars.MEMBERSHIP_PAYMENTS_ENABLED -ne "true") { throw "Pilot payment system is not configured as enabled." }
-if ($config.vars.MEMBERSHIP_LIVE_PILOT_ONLY -ne "true") {
-    throw "Expected PILOT_ONLY=true in source config. Public rollout may already be activated; inspect live dashboard."
+if ($config.vars.MEMBERSHIP_LIVE_PILOT_ONLY -ne "false") {
+    throw "Expected PILOT_ONLY=false in source config. Download the latest GitHub public-release branch."
 }
 if ($config.vars.PSObject.Properties.Name -contains "RAZORPAY_KEY_SECRET" -or
     $config.vars.PSObject.Properties.Name -contains "RAZORPAY_WEBHOOK_SECRET" -or
@@ -52,23 +52,16 @@ if ($confirmation -cne "OPEN") { throw "Public activation cancelled; live pilot 
 
 & npm.cmd test
 if ($LASTEXITCODE -ne 0) { throw "Tests failed; public activation cancelled." }
-$config.vars.MEMBERSHIP_LIVE_PILOT_ONLY = "false"
-$originalConfig = Get-Content $configPath -Raw
-try {
-    $updatedConfig = $config | ConvertTo-Json -Depth 30
-    [System.IO.File]::WriteAllText($configPath, $updatedConfig + [Environment]::NewLine)
-    & npm.cmd exec -- wrangler deploy --dry-run
-    if ($LASTEXITCODE -ne 0) { throw "Public Worker dry run failed" }
-    & npm.cmd exec -- wrangler deploy
-    if ($LASTEXITCODE -ne 0) { throw "Cloudflare Worker deploy failed. Check dashboard before repeating the command." }
-} catch {
-    [System.IO.File]::WriteAllText($configPath, $originalConfig)
-    throw
-}
+# GitHub now tracks public state, so deploy the reviewed source config as-is.
+# This does not touch or print the Cloudflare Razorpay API secrets.
+& npm.cmd exec -- wrangler deploy --dry-run
+if ($LASTEXITCODE -ne 0) { throw "Public Worker dry run failed" }
+& npm.cmd exec -- wrangler deploy
+if ($LASTEXITCODE -ne 0) { throw "Cloudflare Worker deploy failed. Check dashboard before repeating the command." }
 Write-Host "Checking live public membership offer..." -ForegroundColor Cyan
 $public = Invoke-RestMethod -Uri "https://houseofverona.in/api/membership/offer" -TimeoutSec 25
-if ($public.annual -ne $true -or $public.checkoutEnabled -ne $true -or $public.price -ne 999) {
+if ($public.annual -ne $true -or $public.checkoutEnabled -ne $true -or $public.price -ne 999 -or $public.testMode -ne $false) {
     throw "Deployed but not verified public. Inspect Cloudflare and pause public payments until corrected."
 }
 Write-Host "PUBLIC MEMBERSHIPS ARE NOW ENABLED. Real INR 999 annual membership checkout available." -ForegroundColor Green
-Write-Host "Save the updated local wrangler.jsonc to GitHub before your next release to avoid re-enabling pilot restrictions." -ForegroundColor Yellow
+Write-Host "Public access is now tracked in the GitHub Wrangler configuration for future releases." -ForegroundColor Green

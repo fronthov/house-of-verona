@@ -38,8 +38,8 @@ jobs:
             }
           }
           $config = Get-Content 'wrangler.jsonc' -Raw | ConvertFrom-Json
-          if ($config.vars.MEMBERSHIP_PAYMENTS_ENABLED -ne 'true' -or $config.vars.MEMBERSHIP_LIVE_PILOT_ONLY -ne 'true') {
-            throw 'New builds must remain pilot-only until a verified paid membership is recorded.'
+          if ($config.vars.MEMBERSHIP_PAYMENTS_ENABLED -ne 'true' -or $config.vars.MEMBERSHIP_LIVE_PILOT_ONLY -ne 'false') {
+            throw 'Expected the reviewed annual membership public-release configuration.'
           }
           foreach ($key in @('RAZORPAY_KEY_ID','RAZORPAY_KEY_SECRET','RAZORPAY_WEBHOOK_SECRET')) {
             if ($config.vars.PSObject.Properties.Name -contains $key) { throw "Secret $key must not be under vars." }
