@@ -12,6 +12,7 @@ if (-not (Test-Path ".\sql\expansion.sql")) { throw "Missing additive D1 expansi
 if (-not (Test-Path ".\sql\member-cards.sql")) { throw "Missing one-year member-card schema." }
 if (-not (Test-Path ".\sql\admin-payment-test.sql")) { throw "Missing admin-only verification schema." }
 if (-not (Test-Path ".\public\assets\hov-emblem.webp")) { throw "Missing official HoV emblem." }
+if (-not (Test-Path ".\public\admin-payment-test.html")) { throw "Missing founder payment test page." }
 $config = Get-Content ".\wrangler.jsonc" -Raw | ConvertFrom-Json
 if ($config.name -ne "house-of-verona") { throw "Worker name does not match the existing live service." }
 if ($config.d1_databases[0].database_name -ne "hov-store") { throw "Wrong D1 database name." }
@@ -72,6 +73,11 @@ try {
         throw "Membership card page did not render."
     }
     Write-Host "Annual membership offer and digital card page verified." -ForegroundColor Green
+    $adminPage = Invoke-WebRequest -Uri "https://houseofverona.in/admin-payment-test.html" -UseBasicParsing -TimeoutSec 25
+    if ($adminPage.StatusCode -ne 200 -or -not $adminPage.Content.Contains("Founder")) {
+        throw "Founder ₹1 test page did not deploy."
+    }
+    Write-Host "Founder payment test page verified." -ForegroundColor Green
 } catch {
     Write-Warning "Annual membership smoke test failed; keep public payments disabled: $($_.Exception.Message)"
 }
