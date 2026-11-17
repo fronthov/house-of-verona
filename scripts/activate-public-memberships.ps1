@@ -1,4 +1,4 @@
-# House of Verona: activate public paid memberships ONLY after a real successful pilot.
+# House of Verona: founder-authorized public Razorpay launch without requiring an earlier paid pilot.
 # Do not paste or commit Razorpay API keys/webhook secrets. Uses Wrangler OAuth on user's PC.
 $ErrorActionPreference = "Stop"
 Set-Location (Split-Path $PSScriptRoot -Parent)
@@ -32,23 +32,18 @@ if ($page.StatusCode -ne 200 -or -not $page.Content.Contains("VERONATES")) {
     throw "The membership-card page is not live. Deploy pilot release first."
 }
 
-Write-Host "Checking production D1 for a real, completed, emailed one-year pilot membership..." -ForegroundColor Cyan
-$sql = "SELECT COUNT(*) AS verified_count FROM hov_member_cards c INNER JOIN hov_membership_payments p ON p.razorpay_order_id = c.razorpay_order_id AND p.razorpay_payment_id = c.razorpay_payment_id WHERE p.status = 'paid' AND p.currency = 'INR' AND p.amount_paise = 99900 AND c.email_sent_at IS NOT NULL AND c.revoked_at IS NULL AND c.expires_at > CAST(strftime('%s','now') AS INTEGER)"
-$raw = (& npm.cmd exec -- wrangler d1 execute hov-store --remote --command $sql --json 2>&1 | Out-String)
-if ($LASTEXITCODE -ne 0) { throw "D1 check failed. Stop: $raw" }
-try {
-    $parsed = ConvertFrom-Json -InputObject $raw
-    $first = @($parsed)[0]
-    $verified = [int]$first.results[0].verified_count
-} catch { throw "Could not parse D1 verification. Do not enable public payments. $($_.Exception.Message)" }
-if ($verified -lt 1) {
-    throw "No successfully captured and emailed live INR 999 annual membership found in D1. Run and verify a real pilot first. Public payments stay restricted."
-}
-Write-Host "Verified annual card record found in production D1." -ForegroundColor Green
-Write-Host "Before continuing, confirm you personally received the pilot membership card email." -ForegroundColor Yellow
-Write-Host "This change exposes real INR 999 membership purchases to ALL signed-in customers." -ForegroundColor Yellow
-$confirmation = Read-Host "Type OPEN to enable public memberships (anything else cancels)"
-if ($confirmation -cne "OPEN") { throw "Public activation cancelled; live pilot restriction remains." }
+# Confirm the one-year card tables exist. No payment is created or processed here.
+Write-Host "Checking production membership-card database tables..." -ForegroundColor Cyan
+& npm.cmd exec -- wrangler d1 execute hov-store --remote --command "SELECT COUNT(*) AS total FROM hov_member_cards;"
+if ($LASTEXITCODE -ne 0) { throw "The production one-year card table is missing or inaccessible; stop." }
+& npm.cmd exec -- wrangler d1 execute hov-store --remote --command "SELECT COUNT(*) AS total FROM hov_member_card_requests;"
+if ($LASTEXITCODE -ne 0) { throw "The production member name request table is missing or inaccessible; stop." }
+
+Write-Warning "NO COMPLETED REAL PAYMENT HAS BEEN VERIFIED. Checkout branding and order creation were checked, but card generation, captured-payment webhook processing and email delivery remain untested end to end."
+Write-Warning "This release may charge real customers INR 999. If a charge succeeds but a card does not arrive, investigate Razorpay capture and the webhook immediately. Never ask customers to pay twice."
+Write-Host "Public activation will not alter any existing Razorpay secret or payment record." -ForegroundColor Cyan
+$confirmation = Read-Host "Type OPEN UNVERIFIED to deploy live public checkout without a completed pilot (anything else cancels)"
+if ($confirmation -cne "OPEN UNVERIFIED") { throw "Public activation cancelled. Pilot restriction remains unchanged." }
 
 & npm.cmd test
 if ($LASTEXITCODE -ne 0) { throw "Tests failed; public activation cancelled." }
