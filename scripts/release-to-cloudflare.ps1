@@ -7,7 +7,7 @@ function Invoke-HoVCommand([string[]]$Arguments) {
     & npm.cmd exec -- wrangler @Arguments
     if ($LASTEXITCODE -ne 0) { throw "Wrangler command failed: $($Arguments -join ' ')" }
 }
-Write-Host "House of Verona production release preflight" -ForegroundColor Cyan
+Write-Host "House of Verona — frozen Veronates public release preflight" -ForegroundColor Cyan
 if (-not (Test-Path ".\sql\expansion.sql")) { throw "Missing additive D1 expansion schema." }
 if (-not (Test-Path ".\sql\member-cards.sql")) { throw "Missing one-year member-card schema." }
 if (-not (Test-Path ".\sql\admin-payment-test.sql")) { throw "Missing admin-only verification schema." }
@@ -30,9 +30,8 @@ foreach ($key in $protectedKeys) {
 if ($config.vars.MEMBERSHIP_PAYMENTS_ENABLED -ne "true") {
     throw "Membership payments must be explicitly enabled in the reviewed configuration."
 }
-if (@("true","false") -cnotcontains [string]$config.vars.MEMBERSHIP_LIVE_PILOT_ONLY) {
-    throw "MEMBERSHIP_LIVE_PILOT_ONLY must be an explicit text value true or false."
-}
+if ($config.vars.MEMBERSHIP_LIVE_PILOT_ONLY -ne "false") { throw "Public release requires pilot-only false." }
+if ($config.vars.ADMIN_ONE_RUPEE_TEST_ENABLED -ne "false") { throw "Public release requires founder INR 1 test disabled." }
 & npm.cmd test
 if ($LASTEXITCODE -ne 0) { throw "Tests failed. Live Worker unchanged." }
 Invoke-HoVCommand -Arguments @("deploy", "--dry-run")
@@ -61,12 +60,11 @@ try {
 Write-Host "Checking the deployed annual membership endpoints..." -ForegroundColor Cyan
 try {
     $offer = Invoke-RestMethod -Uri "https://houseofverona.in/api/membership/offer" -TimeoutSec 25
-    if ($offer.annual -ne $true -or $offer.price -ne 999) {
+    if ($offer.annual -ne $true -or $offer.price -ne 999 -or $offer.testMode -ne $false) {
         throw "Expected annual=true and introductory price=999 in membership offer."
     }
-    $expectedPublicCheckout = $config.vars.MEMBERSHIP_LIVE_PILOT_ONLY -eq "false"
-    if ($offer.checkoutEnabled -ne $expectedPublicCheckout) {
-        throw "Membership checkout does not match configured pilot/public access."
+    if ($offer.checkoutEnabled -ne $true) {
+        throw "PUBLIC membership checkout is not yet enabled for customers."
     }
     $cardPage = Invoke-WebRequest -Uri "https://houseofverona.in/membership-card.html" -UseBasicParsing -TimeoutSec 25
     if ($cardPage.StatusCode -ne 200 -or -not $cardPage.Content.Contains("VERONATES")) {
@@ -89,8 +87,5 @@ try {
     Write-Warning "Live-site verification failed: $($_.Exception.Message)"
     throw "Deployment could not be confirmed on houseofverona.in. Do not proceed to Razorpay until this is fixed."
 }
-if ($config.vars.MEMBERSHIP_LIVE_PILOT_ONLY -eq "false") {
-    Write-Host "Public release finished. One-year Razorpay memberships should be available to all signed-in users." -ForegroundColor Green
-} else {
-    Write-Host "Pilot release finished. Checkout remains restricted to authorised pilot accounts." -ForegroundColor Yellow
-}
+Write-Host "PUBLIC VERONATES RELEASE DEPLOYED: ₹999/year, real Razorpay payments, founder ₹1 checkout disabled." -ForegroundColor Green
+Write-Host "Do not deploy unrelated changes without a tested code review. Check the first captured customer payment, card and email." -ForegroundColor Yellow

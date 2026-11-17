@@ -24,3 +24,9 @@ test('admin verification card cannot be treated as a membership',()=>{
  assert.doesNotMatch(html,/<Admin>/);
  assert.equal(adminTestCard({status:'created'}),null);
 });
+
+test('frozen public release disables old ₹1 founder payment feature',()=>{
+ const env={RAZORPAY_KEY_ID:'rzp_live_example',RAZORPAY_KEY_SECRET:'secret',RAZORPAY_WEBHOOK_SECRET:'secret',
+  MEMBERSHIP_PAYMENTS_ENABLED:'true',MEMBERSHIP_LIVE_PILOT_ONLY:'false',ADMIN_ONE_RUPEE_TEST_ENABLED:'false'};
+ assert.equal(adminTestEnabled(env,{admin:true}),false);
+});

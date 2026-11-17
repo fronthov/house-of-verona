@@ -51,3 +51,11 @@ test('live pilot is restricted to founder or explicitly selected pilot email',()
  env.MEMBERSHIP_LIVE_PILOT_ONLY='false';
  assert.equal(membershipPaymentMode(env,{admin:false,email:'stranger@example.com'}),'live');
 });
+
+// Frozen public-launch access rules: ₹999 live memberships allowed, founder ₹1 checkout disabled.
+test('public annual membership accepts live payments without founder pilot gate',()=>{
+ const env={RAZORPAY_KEY_ID:'rzp_live_sample',RAZORPAY_KEY_SECRET:'secret',RAZORPAY_WEBHOOK_SECRET:'secret',
+  MEMBERSHIP_PAYMENTS_ENABLED:'true',MEMBERSHIP_LIVE_PILOT_ONLY:'false',ADMIN_ONE_RUPEE_TEST_ENABLED:'false'};
+ assert.equal(membershipPaymentMode(env,null),'live');
+ assert.equal(membershipPaymentMode(env,{email:'customer@example.com',admin:false}),'live');
+});
