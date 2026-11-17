@@ -23,6 +23,8 @@ jobs:
           node --check src/index.js
           node --check src/commerce-expansion.js
           node --check src/member-cards.js
+          node --check src/admin-payment-test.js
+          node --check public/admin-payment-test.js
           node --check public/member-card.js
           node --check public/app.js
       - name: Validate PowerShell pilot and public release scripts

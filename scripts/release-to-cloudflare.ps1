@@ -10,6 +10,7 @@ function Invoke-HoVCommand([string[]]$Arguments) {
 Write-Host "House of Verona production release preflight" -ForegroundColor Cyan
 if (-not (Test-Path ".\sql\expansion.sql")) { throw "Missing additive D1 expansion schema." }
 if (-not (Test-Path ".\sql\member-cards.sql")) { throw "Missing one-year member-card schema." }
+if (-not (Test-Path ".\sql\admin-payment-test.sql")) { throw "Missing admin-only verification schema." }
 if (-not (Test-Path ".\public\assets\hov-emblem.webp")) { throw "Missing official HoV emblem." }
 $config = Get-Content ".\wrangler.jsonc" -Raw | ConvertFrom-Json
 if ($config.name -ne "house-of-verona") { throw "Worker name does not match the existing live service." }
@@ -45,6 +46,8 @@ Write-Host "Applying additive franchise/membership schema..." -ForegroundColor C
 Invoke-HoVCommand -Arguments @("d1", "execute", "hov-store", "--remote", "--file=./sql/expansion.sql")
 Write-Host "Applying idempotent one-year member-card tables..." -ForegroundColor Cyan
 Invoke-HoVCommand -Arguments @("d1", "execute", "hov-store", "--remote", "--file=./sql/member-cards.sql")
+Write-Host "Applying isolated founder-only ₹1 verification table..." -ForegroundColor Cyan
+Invoke-HoVCommand -Arguments @("d1", "execute", "hov-store", "--remote", "--file=./sql/admin-payment-test.sql")
 Write-Host "Updating the existing Cloudflare Worker with configured membership access..." -ForegroundColor Cyan
 Invoke-HoVCommand -Arguments @("deploy")
 try {

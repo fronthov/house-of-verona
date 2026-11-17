@@ -1,6 +1,7 @@
 // House of Verona — franchise enquiries and payment-verified annual memberships.
 // Keep Razorpay keys and webhook secret in Cloudflare Worker secrets, never GitHub.
 import {oneCalendarYearAfter,cardNumberFromPayment,cardName,cardForUser,notifyCardByEmail,isAnnualCardActive} from './member-cards.js';
+import {adminTestEnabled,adminTestCard,adminTestCardNumber,adminTestEmailHtml,emailAdminTestCard} from './admin-payment-test.js';
 const stamp = ()=>Math.floor(Date.now()/1000);
 const cutoff = Date.parse('2027-10-27T23:59:59+05:30')/1000;
 export const PROMO_END_AT=cutoff;
@@ -85,11 +86,98 @@ async function markMembershipPaid(env,attempt,paymentId,eventId=''){
  await env.DB.batch(statements);
  return true;
 }
+async function completeAdminOneRupeeTest(env,attempt,paymentId,sendEmail){
+ const pay=String(paymentId);
+ if(!/^pay_[A-Za-z0-9]+$/.test(pay))return null;
+ if(attempt.status==='refunded')return null;
+ if(attempt.status==='created'){
+   const completedAt=stamp(),expires=oneCalendarYearAfter(completedAt);
+   await env.DB.prepare(
+     "UPDATE hov_admin_payment_tests SET status='paid',razorpay_payment_id=?,purchased_at=?,expires_at=?,card_id=? "+
+     "WHERE id=? AND status='created'"
+   ).bind(pay,completedAt,expires,adminTestCardNumber(attempt.id),attempt.id).run();
+ }
+ const card=await env.DB.prepare('SELECT * FROM hov_admin_payment_tests WHERE id=?').bind(attempt.id).first();
+ if(!card||card.status!=='paid'||card.razorpay_payment_id!==pay)return null;
+ const user=await env.DB.prepare('SELECT email FROM hov_users WHERE id=?').bind(card.user_id).first();
+ if(user?.email)await emailAdminTestCard(env,card,user.email,sendEmail);
+ const latest=await env.DB.prepare('SELECT * FROM hov_admin_payment_tests WHERE id=?').bind(card.id).first();
+ return adminTestCard(latest);
+}
 const emailPattern=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const digits=s=>String(s).replace(/\D/g,'');
 export async function handleExpansion(req,env,url,deps){
  const {json,fail,requireUser,currentUser,limit,sendEmail,clean,normEmail,rid}=deps;
  const path=url.pathname,method=req.method;
+ if(path==='/api/admin/membership-test/status'&&method==='GET'){
+   const u=await requireUser(req,env);
+   if(!u.admin)return fail('Founder account required',403);
+   const record=await env.DB.prepare(
+     "SELECT * FROM hov_admin_payment_tests WHERE user_id=? ORDER BY CASE WHEN status='paid' THEN 0 ELSE 1 END, created_at_unix DESC LIMIT 1"
+   ).bind(u.id).first();
+   return json({enabled:adminTestEnabled(env,u),email:u.email,card:adminTestCard(record)});
+ }
+ if(path==='/api/admin/membership-test/checkout'&&method==='POST'){
+   const u=await requireUser(req,env);
+   if(!u.admin)return fail('Founder account required',403);
+   if(!adminTestEnabled(env,u))return fail('Founder ₹1 live verification is not enabled',503);
+   if(!await limit(env,'founder-one-rupee:'+u.id,5,3600))return fail('Too many test checkout attempts',429);
+   const input=await req.json().catch(()=>null);
+   const name=cardName(input?.name);
+   if(name.length<2||/[<>0-9]/.test(name))return fail('Enter your name for the test card');
+   const paid=await env.DB.prepare("SELECT id FROM hov_admin_payment_tests WHERE user_id=? AND status='paid' LIMIT 1").bind(u.id).first();
+   if(paid)return fail('Your ₹1 founder payment was already verified; view your existing test card instead',409);
+   const previous=await env.DB.prepare(
+     "SELECT * FROM hov_admin_payment_tests WHERE user_id=? AND status='created' AND created_at_unix>? ORDER BY created_at_unix DESC LIMIT 1"
+   ).bind(u.id,stamp()-900).first();
+   if(previous){
+     if(previous.member_name!==name)return fail('Use the same card name as the previous attempt, or try again after 15 minutes',409);
+     return json({orderId:previous.razorpay_order_id,keyId:env.RAZORPAY_KEY_ID,amount:100,currency:'INR'});
+   }
+   const order=await razorpayRequest(env,'POST','orders',{
+     amount:100,currency:'INR',receipt:'HOVT-'+rid().replace(/-/g,'').slice(0,26),
+     notes:{product:'veronates_founder_verification_only',account_id:u.id}
+   });
+   if(!/^order_[A-Za-z0-9]+$/.test(String(order.id))||order.amount!==100||order.currency!=='INR')
+     return fail('Razorpay returned an unexpected test order',502);
+   await env.DB.prepare(
+     "INSERT INTO hov_admin_payment_tests(id,user_id,member_name,razorpay_order_id,amount_paise,currency,status,created_at_unix) VALUES(?,?,?,?,100,'INR','created',?)"
+   ).bind(rid(),u.id,name,order.id,stamp()).run();
+   return json({orderId:order.id,keyId:env.RAZORPAY_KEY_ID,amount:100,currency:'INR'},201);
+ }
+ if(path==='/api/admin/membership-test/verify'&&method==='POST'){
+   const u=await requireUser(req,env);
+   if(!u.admin)return fail('Founder account required',403);
+   if(!String(env.RAZORPAY_KEY_ID||'').startsWith('rzp_live_')||!env.RAZORPAY_KEY_SECRET)
+     return fail('Live payment verification is unavailable',503);
+   if(!await limit(env,'founder-verify:'+u.id,12,3600))return fail('Too many verification attempts',429);
+   const body=await req.json().catch(()=>null);
+   const paymentId=clean(body?.razorpay_payment_id,90),orderId=clean(body?.razorpay_order_id,90);
+   const signature=clean(body?.razorpay_signature,90);
+   if(!/^pay_[A-Za-z0-9]+$/.test(paymentId)||!/^order_[A-Za-z0-9]+$/.test(orderId)||!signature)
+     return fail('Missing Razorpay verification data');
+   const attempt=await env.DB.prepare(
+     'SELECT * FROM hov_admin_payment_tests WHERE user_id=? AND razorpay_order_id=?'
+   ).bind(u.id,orderId).first();
+   if(!attempt)return fail('Admin test order not found',404);
+   const expected=await hmacHex(env.RAZORPAY_KEY_SECRET,attempt.razorpay_order_id+'|'+paymentId);
+   if(!constantHexEqual(expected,signature))return fail('Invalid payment signature',403);
+   if(!await verifiedCapturedPayment(env,paymentId,attempt))return fail('₹1 payment was not captured',409);
+   const card=await completeAdminOneRupeeTest(env,attempt,paymentId,sendEmail);
+   if(!card)return fail('Payment captured but verification card could not be issued. Do not pay again.',409);
+   return json({paid:true,testOnly:true,amount:1,card});
+ }
+ if(path==='/api/admin/membership-test/email'&&method==='POST'){
+   const u=await requireUser(req,env);
+   if(!u.admin)return fail('Founder account required',403);
+   if(!await limit(env,'founder-test-email:'+u.id,3,86400))return fail('Too many email requests',429);
+   const record=await env.DB.prepare(
+     "SELECT * FROM hov_admin_payment_tests WHERE user_id=? AND status='paid' ORDER BY created_at_unix DESC LIMIT 1"
+   ).bind(u.id).first();
+   if(!record)return fail('No verified founder test card on this account',404);
+   const accepted=await emailAdminTestCard(env,record,u.email,sendEmail);
+   return json({emailAccepted:accepted,card:adminTestCard(record)});
+ }
  if(path==='/api/membership/offer'&&method==='GET'){
    const u=await currentUser(req,env);
    return json({annual:true,validity:'One calendar year from verified payment',price:membershipPriceAt(),
@@ -215,7 +303,19 @@ export async function handleExpansion(req,env,url,deps){
      if(!payment?.id||!payment?.order_id)return json({accepted:true});
      const attempt=await env.DB.prepare('SELECT * FROM hov_membership_payments WHERE razorpay_order_id=?')
        .bind(payment.order_id).first();
-     if(!attempt)return json({accepted:true});
+     if(!attempt){
+       const test=await env.DB.prepare('SELECT * FROM hov_admin_payment_tests WHERE razorpay_order_id=?')
+         .bind(payment.order_id).first();
+       if(!test)return json({accepted:true});
+       const freshTest=await razorpayRequest(env,'GET','payments/'+encodeURIComponent(payment.id));
+       if(freshTest.id!==payment.id||freshTest.order_id!==test.razorpay_order_id||
+          freshTest.status!=='refunded'||Number(freshTest.amount_refunded)<100)
+         return fail('Founder test refund is not fully verified',409);
+       await env.DB.prepare(
+         "UPDATE hov_admin_payment_tests SET status='refunded',revoked_at=? WHERE id=? AND razorpay_payment_id=? AND status='paid'"
+       ).bind(stamp(),test.id,payment.id).run();
+       return json({accepted:true,adminTestRefunded:true});
+     }
      // Only a fully refunded membership charge revokes its annual benefits.
      const fresh=await razorpayRequest(env,'GET','payments/'+encodeURIComponent(payment.id));
      if(fresh.id!==payment.id||fresh.order_id!==attempt.razorpay_order_id||
@@ -233,7 +333,15 @@ export async function handleExpansion(req,env,url,deps){
    const payment=payload.payload?.payment?.entity;
    if(!payment?.id||!payment.order_id)return json({accepted:true});
    const attempt=await env.DB.prepare('SELECT * FROM hov_membership_payments WHERE razorpay_order_id=?').bind(payment.order_id).first();
-   if(!attempt)return json({accepted:true}); // unrelated Razorpay event
+   if(!attempt){
+     const test=await env.DB.prepare('SELECT * FROM hov_admin_payment_tests WHERE razorpay_order_id=?')
+       .bind(payment.order_id).first();
+     if(!test)return json({accepted:true}); // unrelated Razorpay event
+     if(!await verifiedCapturedPayment(env,payment.id,test))return fail('Founder test capture not verified',409);
+     const card=await completeAdminOneRupeeTest(env,test,payment.id,sendEmail);
+     if(!card)return fail('Founder verification payment reconciliation failed',409);
+     return json({accepted:true,adminTest:true});
+   }
    if(!isRazorpayReady(env,{admin:true}))return fail('Membership verification not configured',503);
    // Webhook signature authenticates notification; API recheck confirms capture and amount.
    if(!await verifiedCapturedPayment(env,payment.id,attempt))return fail('Payment capture not verified',409);
