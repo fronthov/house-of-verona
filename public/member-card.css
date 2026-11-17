@@ -1,0 +1,22 @@
+
+.card-page{max-width:960px;margin:0 auto;padding:70px 6% 110px}.card-page h1{font:400 clamp(35px,5vw,64px)/1.13 Georgia,serif}.card-subtitle{color:#6e6259;line-height:1.8}
+.veronates-card{border:2px solid #cfae6c;max-width:760px;margin:40px auto 24px;padding:40px 45px;border-radius:20px;
+ background:radial-gradient(circle at 86% 8%,#14513f 0,#073729 45%,#04271c 100%);color:#f5e5c4;
+ box-shadow:0 16px 45px rgba(14,27,15,.23)}
+.veronates-card-head{display:flex;align-items:center;gap:22px}.veronates-card-head img{border-radius:50%;border:1px solid #d7b466;object-fit:cover}
+.veronates-card-head span{display:block;font-size:13px;letter-spacing:.2em}.veronates-card-head strong{display:block;font:400 clamp(26px,4vw,44px) Georgia,serif;margin:6px 0}
+.veronates-card-head small{letter-spacing:.19em}.veronates-member-name{font:400 clamp(25px,3.5vw,40px) Georgia,serif;margin:40px 0 6px}
+.veronates-card-id{font-size:13px;letter-spacing:.15em;color:#e5c997}.veronates-validity{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin:37px 0 26px;border-top:1px solid #b08e65;padding-top:20px}
+.veronates-validity span{display:block;font-size:10px;letter-spacing:.18em;margin-bottom:10px}.veronates-validity strong{font-size:14px;font-weight:500;line-height:1.5}
+.veronates-card-foot{display:flex;justify-content:space-between;gap:15px;border-top:1px solid #b08e65;padding-top:15px;letter-spacing:.12em;font-size:10px}
+.card-help{font-size:12px;line-height:1.8;color:#776b60;max-width:760px;margin:10px auto 30px}.card-actions{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap}
+.card-actions a,.card-actions button{display:inline-block;padding:13px 18px}.card-actions .outline{border:1px solid #aa987a;background:transparent;color:#3e3225}
+.card-expired .veronates-card{filter:grayscale(.55)}.card-expired #cardStatus{color:#f4b7ae}
+#cardMessage,#emailMessage{line-height:1.7}
+@media(max-width:600px){.veronates-card{padding:24px 22px}.veronates-card-head{gap:13px}.veronates-card-head img{width:65px;height:65px}
+.veronates-validity{grid-template-columns:1fr;gap:14px}.veronates-card-foot{flex-direction:column}}
+@media print{
+ body{background:white;color:black}.topbar,header,footer,.eyebrow,.card-page>h1,.card-subtitle,.card-help,.card-actions,#cardMessage,#emailMessage{display:none!important}
+ .card-page{padding:0;max-width:none}.veronates-card{max-width:100%;box-shadow:none;margin:0;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+ @page{size:A4 portrait;margin:24mm}
+}

@@ -1,0 +1,56 @@
+name: HoV review checks
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [hov/customer-policies-2026-11, 'release/**']
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout candidate code
+        uses: actions/checkout@v4
+      - name: Use Node.js 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Check JavaScript syntax
+        run: |
+          node --check src/index.js
+          node --check src/commerce-expansion.js
+          node --check src/member-cards.js
+          node --check src/admin-payment-test.js
+          node --check public/admin-payment-test.js
+          node --check public/member-card.js
+          node --check public/app.js
+      - name: Validate PowerShell pilot and public release scripts
+        shell: pwsh
+        run: |
+          foreach ($path in @('scripts/release-to-cloudflare.ps1', 'scripts/activate-public-memberships.ps1')) {
+            $tokens = $null
+            $parseErrors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile((Join-Path (Get-Location) $path), [ref]$tokens, [ref]$parseErrors)
+            if ($parseErrors.Count -gt 0) {
+              foreach ($parseError in $parseErrors) { Write-Error $parseError }
+              exit 1
+            }
+          }
+          $config = Get-Content 'wrangler.jsonc' -Raw | ConvertFrom-Json
+          if ($config.vars.MEMBERSHIP_PAYMENTS_ENABLED -ne 'true' -or $config.vars.MEMBERSHIP_LIVE_PILOT_ONLY -ne 'false' -or $config.vars.ADMIN_ONE_RUPEE_TEST_ENABLED -ne 'false') {
+            throw 'Frozen public release must enable INR 999 memberships and disable founder INR 1 payment testing.'
+          }
+          foreach ($key in @('RAZORPAY_KEY_ID','RAZORPAY_KEY_SECRET','RAZORPAY_WEBHOOK_SECRET')) {
+            if ($config.vars.PSObject.Properties.Name -contains $key) { throw "Secret $key must not be under vars." }
+          }
+      - name: Execute business and brand tests
+        run: npm test
+      - name: Verify no franchise fee revealed in public source
+        run: |
+          if grep -RniE '20[[:space:]]*(lakh|lac)|20,00,000|2000000' public src sql; then
+            echo 'Potential confidential franchise fee exposed'
+            exit 1
+          fi
