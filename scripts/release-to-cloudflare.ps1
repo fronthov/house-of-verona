@@ -73,13 +73,21 @@ try {
         throw "Membership card page did not render."
     }
     Write-Host "Annual membership offer and digital card page verified." -ForegroundColor Green
-    $adminPage = Invoke-WebRequest -Uri "https://houseofverona.in/admin-payment-test.html" -UseBasicParsing -TimeoutSec 25
-    if ($adminPage.StatusCode -ne 200 -or -not $adminPage.Content.Contains("Founder")) {
-        throw "Founder ₹1 test page did not deploy."
+    $adminPage = Invoke-WebRequest -Uri ("https://houseofverona.in/admin-payment-test.html?deploycheck=" + [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()) -UseBasicParsing -TimeoutSec 25 -Headers @{"Cache-Control"="no-cache"}
+    if ($adminPage.StatusCode -ne 200 -or
+        -not $adminPage.Content.Contains('id="payOneRupee"') -or
+        -not $adminPage.Content.Contains('src="/admin-payment-test.js"')) {
+        throw "Live URL does not contain the founder ₹1 button. Check route / Cloudflare deployment."
     }
-    Write-Host "Founder payment test page verified." -ForegroundColor Green
+    $adminJs = Invoke-WebRequest -Uri ("https://houseofverona.in/admin-payment-test.js?deploycheck=" + [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()) -UseBasicParsing -TimeoutSec 25 -Headers @{"Cache-Control"="no-cache"}
+    if ($adminJs.StatusCode -ne 200 -or -not $adminJs.Content.Contains("/api/admin/membership-test/checkout") -or
+        -not $adminJs.Content.Contains("amount:100")) {
+        throw "Live founder checkout JavaScript missing or stale. Check Cloudflare Worker and assets."
+    }
+    Write-Host "Live ₹1 founder page and checkout JavaScript verified at houseofverona.in." -ForegroundColor Green
 } catch {
-    Write-Warning "Annual membership smoke test failed; keep public payments disabled: $($_.Exception.Message)"
+    Write-Warning "Live-site verification failed: $($_.Exception.Message)"
+    throw "Deployment could not be confirmed on houseofverona.in. Do not proceed to Razorpay until this is fixed."
 }
 if ($config.vars.MEMBERSHIP_LIVE_PILOT_ONLY -eq "false") {
     Write-Host "Public release finished. One-year Razorpay memberships should be available to all signed-in users." -ForegroundColor Green
