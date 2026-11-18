@@ -87,5 +87,26 @@ try {
     Write-Warning "Live-site verification failed: $($_.Exception.Message)"
     throw "Deployment could not be confirmed on houseofverona.in. Do not proceed to Razorpay until this is fixed."
 }
+Write-Host "Verifying public Nagpur SEO pages and live sitemap..." -ForegroundColor Cyan
+$seoPages = @(
+    @{ Path="specialty-coffee-nagpur.html"; Expected="Coffee should have an origin" },
+    @{ Path="orthodox-tea-nagpur.html"; Expected="Premium tea begins" },
+    @{ Path="coffee-tea-packages-nagpur.html"; Expected="Good coffee should follow" }
+)
+foreach ($item in $seoPages) {
+    $pageUrl = "https://houseofverona.in/" + $item.Path + "?seo-deploy=" + [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
+    $livePage = Invoke-WebRequest -Uri $pageUrl -UseBasicParsing -TimeoutSec 25 -Headers @{"Cache-Control"="no-cache"}
+    if ($livePage.StatusCode -ne 200 -or -not $livePage.Content.Contains($item.Expected)) {
+        throw "SEO release page failed production verification: $($item.Path)"
+    }
+    Write-Host "Verified $($item.Path)" -ForegroundColor Green
+}
+$liveSitemap = Invoke-WebRequest -Uri "https://houseofverona.in/sitemap.xml" -UseBasicParsing -TimeoutSec 25
+foreach ($item in $seoPages) {
+    if (-not $liveSitemap.Content.Contains($item.Path)) {
+        throw "Live XML sitemap missing: $($item.Path)"
+    }
+}
+Write-Host "Nagpur SEO pages and sitemap are live and discoverable." -ForegroundColor Green
 Write-Host "PUBLIC VERONATES RELEASE DEPLOYED: ₹999/year, real Razorpay payments, founder ₹1 checkout disabled." -ForegroundColor Green
 Write-Host "Do not deploy unrelated changes without a tested code review. Check the first captured customer payment, card and email." -ForegroundColor Yellow
