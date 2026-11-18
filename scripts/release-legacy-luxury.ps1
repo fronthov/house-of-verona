@@ -17,15 +17,15 @@ if($catalog.storeOpen -ne $true -or !($catalog.products.Count -gt 0)){throw 'Exi
 Write-Host 'Matching live-compatible backend confirmed; proceeding with tests.' -ForegroundColor Green
 & npm.cmd test
 if($LASTEXITCODE -ne 0){throw 'Tests failed; no deployment.'}
-Wrangler @('deploy','--dry-run')
+Wrangler -A @('deploy','--dry-run')
 $backupDir=Join-Path $env:USERPROFILE 'HoV-Website\backups'
 New-Item -ItemType Directory -Force -Path $backupDir | Out-Null
 $backup=Join-Path $backupDir ('hov-legacy-before-luxury-'+(Get-Date -Format 'yyyyMMdd-HHmmss')+'.sql')
-Wrangler @('d1','export','hov-store','--remote','--output',$backup)
+Wrangler -A @('d1','export','hov-store','--remote','--output',$backup)
 if(!(Test-Path $backup) -or (Get-Item $backup).Length -lt 100){throw 'D1 backup missing; deployment cancelled.'}
 Write-Host 'Database backup saved:' $backup -ForegroundColor Green
 Write-Host 'Deploying existing storefront backend with visual improvements...' -ForegroundColor Cyan
-Wrangler @('deploy')
+Wrangler -A @('deploy')
 $home=Invoke-WebRequest ('https://houseofverona.in/?verona-release='+[DateTimeOffset]::UtcNow.ToUnixTimeSeconds()) -UseBasicParsing -TimeoutSec 25 -Headers @{'Cache-Control'='no-cache'}
 $fr=Invoke-WebRequest 'https://houseofverona.in/franchise.html' -UseBasicParsing -TimeoutSec 25
 $br=Invoke-WebRequest 'https://houseofverona.in/brand.html' -UseBasicParsing -TimeoutSec 25
