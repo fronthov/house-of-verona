@@ -1,0 +1,26 @@
+name: HoV legacy-compatible luxury release checks
+on:
+  push:
+    branches: ['release/hov-luxury-live-compatible-2026-11-18']
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - name: Node syntax and business tests
+        run: |
+          node --check src/index.js
+          node --check public/app.js
+          npm test
+      - name: Parse guarded PowerShell script
+        shell: pwsh
+        run: |
+          $tokens=$null
+          $errors=$null
+          [void][System.Management.Automation.Language.Parser]::ParseFile((Join-Path (Get-Location) 'scripts/release-legacy-luxury.ps1'),[ref]$tokens,[ref]$errors)
+          if($errors.Count) { $errors | ForEach-Object { Write-Error $_ }; exit 1 }
