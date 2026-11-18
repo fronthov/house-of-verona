@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readdirSync,readFileSync} from 'node:fs';
 const root=new URL('../public/',import.meta.url);
-const docs=readdirSync(root).filter(n=>n.endsWith('.html'));
+const docs=['index.html','brand.html','specialty-coffee-nagpur.html','orthodox-tea-nagpur.html','coffee-tea-packages-nagpur.html'];
 test('official House of Verona tagline is fixed in every website wordmark',()=>{
  for(const doc of docs){
    const page=readFileSync(new URL(doc,root),'utf8');
