@@ -23,3 +23,11 @@ test('SEO pages retain explicit local targeting without replacing brand name',()
    assert.match(s,/HOUSE OF VERONA<small>INDIA IN EVERY SIP<\/small>/);
  }
 });
+
+test('international campaign language preserves Indian sourcing and the permanent tagline',()=>{
+ const home=readFileSync(new URL('index.html',root),'utf8');
+ assert.match(home,/A world of coffee &amp; tea experiences/);
+ assert.match(home,/GLOBALLY INSPIRED BREWING · INDIAN ROOTS/);
+ assert.match(home,/Our coffee and tea origins are Indian/);
+ assert.match(home,/hov-world-tagline\">INDIA IN EVERY SIP/);
+});

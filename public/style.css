@@ -77,3 +77,14 @@ header .hov-header-logo{gap:11px;min-width:0}.hov-logo{display:block;flex-shrink
 .hov-seo-nav a{font-size:12px;color:#55483e;white-space:nowrap}
 @media(max-width:1050px){.hov-quality-grid,.hov-seo-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.hov-seo-nav{gap:10px}.hov-seo-nav a{font-size:11px}}
 @media(max-width:760px){.hov-quality-grid,.hov-seo-grid{grid-template-columns:1fr}.hov-seo-hero{padding:65px 6% 70px}.hov-seo-section,.hov-seo-conclusion{padding:65px 6%}.hov-seo-nav{overflow-x:auto;flex-wrap:nowrap;justify-content:flex-start;padding:8px 0}.hov-seo-nav a{flex-shrink:0}.hov-quality .section-head{display:block}}
+
+/* Globally inspired brewing, Indian roots. Official tagline remains unchanged. */
+.hov-world{background:#1d291f;color:#f2e5d1;text-align:center}
+.hov-world h2{margin:0 auto 24px;max-width:960px}
+.hov-world h2 em{font-weight:400;color:#d5ae70}
+.hov-world-intro{max-width:790px;margin:0 auto 18px;font-size:18px;line-height:1.8;color:#e6d6c1}
+.hov-world-note{max-width:750px;margin:0 auto;color:#cfbd9e;font-size:12px;line-height:1.75}
+.hov-world .hov-origin-actions{justify-content:center}
+.hov-world .hov-outline{color:#f1debf;border-color:#ab8753}
+.hov-world-tagline{display:block;margin-top:40px;padding-top:20px;border-top:1px solid #ac8b5b;letter-spacing:.28em;font-size:12px;color:#e2be7e;font-weight:700}
+@media(max-width:680px){.hov-world-intro{font-size:16px}.hov-world-tagline{letter-spacing:.19em}}
