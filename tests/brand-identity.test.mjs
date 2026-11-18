@@ -24,10 +24,13 @@ test('SEO pages retain explicit local targeting without replacing brand name',()
  }
 });
 
-test('international campaign language preserves Indian sourcing and the permanent tagline',()=>{
+test('India beyond luxury experience preserves truthful origins and permanent tagline',()=>{
  const home=readFileSync(new URL('index.html',root),'utf8');
- assert.match(home,/A world of coffee &amp; tea experiences/);
- assert.match(home,/GLOBALLY INSPIRED BREWING · INDIAN ROOTS/);
- assert.match(home,/Our coffee and tea origins are Indian/);
- assert.match(home,/hov-world-tagline\">INDIA IN EVERY SIP/);
+ assert.match(home,/A Taste of India,<br><em>Beyond Luxury\./);
+ assert.match(home,/ONE LAND · DISTINCT ORIGINS · REMARKABLE CUPS/);
+ assert.match(home,/Western Ghats/);
+ assert.match(home,/KARNATAKA · MANJARABAD/);
+ assert.match(home,/ASSAM · BRAHMAPUTRA VALLEY/);
+ assert.match(home,/HOUSE OF VERONA<small>INDIA IN EVERY SIP<\/small>/);
+ assert.doesNotMatch(home,/pending verification/i);
 });
