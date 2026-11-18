@@ -46,9 +46,9 @@ if(!(Test-Path -LiteralPath $checkpoint) -or (Get-Item -LiteralPath $checkpoint)
 Write-Host 'Cloudflare D1 recovery bookmark saved:' $checkpoint -ForegroundColor Green
 Write-Host 'Deploying existing storefront backend with visual improvements...' -ForegroundColor Cyan
 Wrangler -A @('deploy')
-$home=Invoke-WebRequest ('https://houseofverona.in/?verona-release='+[DateTimeOffset]::UtcNow.ToUnixTimeSeconds()) -UseBasicParsing -TimeoutSec 25 -Headers @{'Cache-Control'='no-cache'}
+$homepageResponse=Invoke-WebRequest ('https://houseofverona.in/?verona-release='+[DateTimeOffset]::UtcNow.ToUnixTimeSeconds()) -UseBasicParsing -TimeoutSec 25 -Headers @{'Cache-Control'='no-cache'}
 $fr=Invoke-WebRequest 'https://houseofverona.in/franchise.html' -UseBasicParsing -TimeoutSec 25
 $br=Invoke-WebRequest 'https://houseofverona.in/brand.html' -UseBasicParsing -TimeoutSec 25
 $check=Invoke-RestMethod 'https://houseofverona.in/api/health' -TimeoutSec 25
-if($home.StatusCode -ne 200 -or !$home.Content.Contains('A Taste of India,') -or $fr.StatusCode -ne 200 -or $br.StatusCode -ne 200 -or $check.storeOpen -ne $true){throw 'Deploy uploaded, but live verification failed. Check Cloudflare deployment history for rollback.'}
+if($homepageResponse.StatusCode -ne 200 -or !$homepageResponse.Content.Contains('A Taste of India,') -or $fr.StatusCode -ne 200 -or $br.StatusCode -ne 200 -or $check.storeOpen -ne $true){throw 'Deploy uploaded, but live verification failed. Check Cloudflare deployment history for rollback.'}
 Write-Host 'House of Verona luxury homepage published, franchise and brand pages confirmed.' -ForegroundColor Green
