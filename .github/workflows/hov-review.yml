@@ -4,7 +4,7 @@ on:
     branches: [main]
     types: [opened, synchronize, reopened]
   push:
-    branches: [hov/customer-policies-2026-11, 'release/**']
+    branches: [hov/customer-policies-2026-11, 'release/**', 'feature/nagpur-seo-quality-origins-packs-2026-11-18']
 permissions:
   contents: read
 jobs:
