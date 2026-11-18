@@ -88,3 +88,62 @@ header .hov-header-logo{gap:11px;min-width:0}.hov-logo{display:block;flex-shrink
 .hov-world .hov-outline{color:#f1debf;border-color:#ab8753}
 .hov-world-tagline{display:block;margin-top:40px;padding-top:20px;border-top:1px solid #ac8b5b;letter-spacing:.28em;font-size:12px;color:#e2be7e;font-weight:700}
 @media(max-width:680px){.hov-world-intro{font-size:16px}.hov-world-tagline{letter-spacing:.19em}}
+
+
+/* 18 Nov 2026 — House of Verona premium editorial homepage, non-commerce visual upgrade. */
+:root {--hov-emerald:#051b15;--hov-emerald-soft:#0b2820;--hov-brass:#ddb66e;--hov-champagne:#f7ebd5;}
+header{background:#061b16;border-bottom:1px solid #765b35;color:var(--hov-champagne);}
+header .brand-wordmark,header .logo,header nav a,header .hov-seo-nav a{color:var(--hov-champagne);}
+header .head-actions button{color:var(--hov-champagne);border-color:#886e48;}
+header nav a:hover,header .hov-seo-nav a:hover{color:var(--hov-brass);}
+.hov-luxe-hero{min-height:630px;background:radial-gradient(circle at 15% 10%,#164639 0%,transparent 48%),linear-gradient(125deg,#061811,#0c2b23 65%,#04150f);color:var(--hov-champagne);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);align-items:stretch;border-bottom:1px solid #bd965e;}
+.hov-luxe-hero-copy{padding:clamp(55px,7.3vw,116px) clamp(27px,5vw,90px) 48px clamp(26px,7vw,112px);position:relative;z-index:1;}
+.hov-luxe-eyebrow{display:block;font-size:10px;font-weight:700;line-height:1.6;letter-spacing:.23em;color:#ddb474;}
+.hov-luxe-hero h1{font-family:Georgia,'Times New Roman',serif;font-weight:400;letter-spacing:-.045em;font-size:clamp(53px,6.3vw,116px);line-height:.94;margin:35px 0 18px;color:#f5e7d2;}
+.hov-luxe-hero h1 span{color:#e5c28b;}
+.hov-luxe-signature{font:italic clamp(23px,2.5vw,41px)/1.25 Georgia,serif;color:#dbaf63;margin:0 0 24px;}
+.hov-luxe-lead{max-width:540px;line-height:1.8;color:#d8cfbd;font-size:15px;}
+.hov-luxe-micro{font-size:10px;letter-spacing:.2em;color:#ac916b;margin-top:36px;}
+.hov-luxe-cta{display:flex;align-items:center;flex-wrap:wrap;gap:13px;margin:30px 0 0;}
+.hov-luxe-button,.hov-luxe-outline{display:inline-flex;align-items:center;justify-content:center;gap:18px;padding:15px 22px;border:1px solid #c69c5a;letter-spacing:.13em;font-size:10px;font-weight:bold;min-height:46px;transition:transform .2s ease,background .2s ease,color .2s ease;}
+.hov-luxe-button{background:linear-gradient(125deg,#e5c084,#b98c47);color:#112219;}
+.hov-luxe-outline{color:#e4c896;background:transparent;}
+.hov-luxe-button:hover,.hov-luxe-outline:hover{transform:translateY(-2px);}
+.hov-luxe-hero-visual{position:relative;min-height:530px;overflow:hidden;background:#09261d;}
+.hov-luxe-hero-visual>img{display:block;width:100%;height:100%;position:absolute;inset:0;object-fit:cover;object-position:center;}
+.hov-luxe-hero-visual::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#061b16 0%,transparent 25%,transparent 80%,#061b1633 100%);pointer-events:none;}
+.hov-luxe-image-caption{position:absolute;right:6%;bottom:6%;color:#f7e5cb;text-shadow:0 2px 10px #000;font-size:9px;letter-spacing:.18em;z-index:1;}
+.hov-luxe-collection{background:radial-gradient(circle at 80% 20%,#153d30 0%,transparent 55%),#051d16;color:#f3e9d7;padding:76px 5% 66px;border-bottom:1px solid #8e714a;}
+.hov-luxe-tea{background:radial-gradient(circle at 15% 15%,#174035 0%,transparent 56%),#061911;}
+.hov-luxe-intro{text-align:center;max-width:800px;margin:0 auto 35px;}
+.hov-luxe-intro h2{font:400 clamp(35px,4.4vw,66px)/1.1 Georgia,'Times New Roman',serif;color:#f0dfc2;margin:12px 0 18px;}
+.hov-luxe-intro p{color:#c9beac;line-height:1.75;font-size:14px;}
+.hov-luxe-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:21px;max-width:1250px;margin:0 auto;}
+.hov-luxe-tile{display:block;overflow:hidden;border:1px solid #927043;border-radius:12px;color:#f3ead5;background:#09251d;transition:transform .2s,border-color .2s;}
+.hov-luxe-tile:hover{transform:translateY(-4px);border-color:#e1b46c;}
+.hov-luxe-photo{display:block;aspect-ratio:5/4;background-image:url('/assets/hov-roast-and-tea-sprite.webp');background-size:300% 200%;background-repeat:no-repeat;}
+.hov-photo-light{background-position:0% 0%;}.hov-photo-medium{background-position:50% 0%;}.hov-photo-dark{background-position:100% 0%;}
+.hov-photo-green{background-position:0% 100%;}.hov-photo-black{background-position:50% 100%;}.hov-photo-assam{background-position:100% 100%;}
+.hov-luxe-tile-body{display:flex;align-items:center;flex-direction:column;padding:19px 17px 25px;text-align:center;min-height:147px;}
+.hov-luxe-tile-body strong{font:400 19px/1.2 Georgia,serif;letter-spacing:.07em;}
+.hov-luxe-tile-body em{font:italic 15px/1.5 Georgia,serif;color:#dcb476;margin:5px 0 7px;}
+.hov-luxe-tile-body small{font-size:12px;line-height:1.6;color:#cfc4b0;max-width:275px;}
+.hov-luxe-centered{margin:30px auto 0;max-width:max-content;display:flex;}
+.hov-india-feature{display:grid;grid-template-columns:minmax(0,.98fr) minmax(0,1.02fr);background:linear-gradient(145deg,#0e2c23,#061811);color:#f4e5cb;border-top:1px solid #b88a4b;border-bottom:1px solid #b88a4b;min-height:490px;}
+.hov-india-feature-image{min-height:490px;position:relative;overflow:hidden;}
+.hov-india-feature-image img{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover;}
+.hov-india-feature-copy{padding:clamp(42px,5vw,80px) clamp(26px,5vw,90px);align-self:center;}
+.hov-india-feature h2{font:400 clamp(40px,4.5vw,72px)/1.08 Georgia,serif;margin:17px 0 26px;color:#f5e8d1;}
+.hov-india-feature h2 em{color:#ddb773;font-weight:400;}
+.hov-india-feature p{font-size:15px;line-height:1.9;max-width:670px;color:#d8ccb9;}
+.hov-india-origins{display:flex;flex-wrap:wrap;gap:9px;margin:25px 0 0;}
+.hov-india-origins span{border:1px solid #997643;border-radius:24px;padding:8px 12px;color:#e0caa2;font-size:10px;letter-spacing:.08em;}
+#quality{background:#0b261e;color:#f3e7d2;}
+#quality .hov-quality-lead,#quality .hov-quality-grid p{color:#dfd0b5;}
+#quality h2{color:#f0dfc3;}
+#quality article,#quality .hov-quality-grid article{border-color:#7d6547;}
+footer{background:#041912;color:#f0dfc7;}
+footer a{color:#f0dfc7;}
+@media(max-width:950px){.hov-luxe-hero{grid-template-columns:1fr 1fr}.hov-luxe-hero-copy{padding:70px 30px}.hov-luxe-hero h1{font-size:clamp(50px,6vw,85px)}.hov-india-feature{grid-template-columns:1fr}.hov-india-feature-image{min-height:340px}.hov-luxe-tiles{gap:12px}}
+@media(max-width:700px){.hov-luxe-hero{display:flex;flex-direction:column}.hov-luxe-hero-copy{padding:56px 6% 38px}.hov-luxe-hero h1{font-size:clamp(55px,14vw,82px)}.hov-luxe-hero-visual{min-height:340px}.hov-luxe-tiles{grid-template-columns:1fr;max-width:450px}.hov-luxe-collection{padding:63px 6%}.hov-luxe-photo{aspect-ratio:5/3}.hov-luxe-tile-body{min-height:auto}.hov-india-feature-image{min-height:275px}.hov-india-feature-copy{padding:45px 6%}.hov-luxe-image-caption{font-size:8px}}
+@media(prefers-reduced-motion:reduce){.hov-luxe-tile,.hov-luxe-button,.hov-luxe-outline{transition:none!important}}
