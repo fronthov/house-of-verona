@@ -18,12 +18,32 @@ Write-Host 'Matching live-compatible backend confirmed; proceeding with tests.' 
 & npm.cmd test
 if($LASTEXITCODE -ne 0){throw 'Tests failed; no deployment.'}
 Wrangler -A @('deploy','--dry-run')
+# D1 production databases provide Time Travel recovery even when a SQL export fails.
+# For this code-only redesign, record the current recovery bookmark before deployment.
+# Never call a restore command here: a restore would overwrite later orders.
 $backupDir=Join-Path $env:USERPROFILE 'HoV-Website\backups'
 New-Item -ItemType Directory -Force -Path $backupDir | Out-Null
-$backup=Join-Path $backupDir ('hov-legacy-before-luxury-'+(Get-Date -Format 'yyyyMMdd-HHmmss')+'.sql')
-Wrangler -A @('d1','export','hov-store','--remote','--output',$backup)
-if(!(Test-Path $backup) -or (Get-Item $backup).Length -lt 100){throw 'D1 backup missing; deployment cancelled.'}
-Write-Host 'Database backup saved:' $backup -ForegroundColor Green
+Write-Host 'Recording a Cloudflare D1 Time Travel recovery bookmark...' -ForegroundColor Cyan
+$recoveryText = (& npm.cmd exec -- wrangler d1 time-travel info hov-store 2>&1 | Out-String)
+if($LASTEXITCODE -ne 0){
+  Write-Host $recoveryText
+  throw 'D1 Time Travel recovery checkpoint failed. No deployment attempted. Share the error above.'
+}
+Write-Host $recoveryText
+$bookmark=$null
+if($recoveryText -match '(?i)\b[0-9a-f]{8}-[0-9a-f]{8}-[0-9a-f]{8}-[0-9a-f]{32}\b'){
+  $bookmark=$Matches[0]
+}
+if([string]::IsNullOrWhiteSpace($bookmark)){
+  throw 'Could not validate the current D1 recovery bookmark. No deployment attempted.'
+}
+$checkpoint=Join-Path $backupDir ('hov-time-travel-before-luxury-'+(Get-Date -Format 'yyyyMMdd-HHmmss')+'.txt')
+$utcTime=[DateTime]::UtcNow.ToString('o')
+@("Database: hov-store","Database ID: 5afde4dd-7f21-4ea0-8ba3-f7a45f4cf716","Captured (UTC): $utcTime","Recovery bookmark: $bookmark","Cloudflare D1 Time Travel is time-limited; this is NOT a standalone SQL backup.","WARNING: Restoring would overwrite database changes after this bookmark.") | Set-Content -LiteralPath $checkpoint -Encoding UTF8
+if(!(Test-Path -LiteralPath $checkpoint) -or (Get-Item -LiteralPath $checkpoint).Length -lt 100){
+  throw 'D1 checkpoint file not saved. No deployment attempted.'
+}
+Write-Host 'Cloudflare D1 recovery bookmark saved:' $checkpoint -ForegroundColor Green
 Write-Host 'Deploying existing storefront backend with visual improvements...' -ForegroundColor Cyan
 Wrangler -A @('deploy')
 $home=Invoke-WebRequest ('https://houseofverona.in/?verona-release='+[DateTimeOffset]::UtcNow.ToUnixTimeSeconds()) -UseBasicParsing -TimeoutSec 25 -Headers @{'Cache-Control'='no-cache'}
