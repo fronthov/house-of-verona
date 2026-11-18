@@ -51,3 +51,29 @@ header .hov-header-logo{gap:11px;min-width:0}.hov-logo{display:block;flex-shrink
 .origin-disclaimer{margin:28px 0;color:#6e6256;font-size:12px;line-height:1.8;max-width:850px}
 @media(max-width:1060px){header .hov-header-logo .brand-wordmark{font-size:12px;letter-spacing:.09em}.hov-origins-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:680px){.hov-logo{width:42px;height:42px}.hov-header-logo .brand-wordmark{font-size:10px!important}.hov-header-logo .brand-wordmark small{font-size:7px}.hov-origins-grid{grid-template-columns:1fr}.hov-origin-subhead{flex-direction:column;gap:6px}.hov-origin-card{min-height:0}.hov-footer-logo .hov-logo{width:44px;height:44px}}
+
+/* Quality-first local SEO pages and group services — review branch only. */
+.hov-quality{background:#efe6d9;text-align:center}.hov-quality h2 em{font-weight:400;color:#936c34}
+.hov-quality-lead{max-width:770px;margin:24px auto 40px;line-height:1.85;color:#5c5043;font-size:17px}
+.hov-quality-grid,.hov-seo-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;text-align:left}
+.hov-quality-grid article,.hov-seo-card{background:#fffdf9;border:1px solid #d6c7b0;padding:27px 24px;min-width:0}
+.hov-quality-grid article span,.hov-seo-card span{display:block;color:#947042;letter-spacing:.18em;font-size:10px;font-weight:700;margin-bottom:20px}
+.hov-quality-grid h3,.hov-seo-card h3{font:400 29px/1.18 Georgia,serif;margin:0 0 16px}
+.hov-quality-grid p,.hov-seo-card p{color:#63584e;line-height:1.75;font-size:14px;margin-bottom:0}
+.hov-quality-grid a{display:inline-block;margin-top:18px;border-bottom:1px solid #846239;color:#73512c;font-size:13px}
+.hov-packages{background:#f9f6f0}.hov-origin-actions,.hov-seo-actions{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:29px 0}
+.hov-outline{display:inline-block;border:1px solid #a88b61;padding:15px 22px;font-weight:600;font-size:12px;letter-spacing:.04em;color:#3d3021}
+.hov-seo-main{background:#f8f4ec}.hov-seo-hero{padding:95px 9% 92px;background:#211811;color:#f6e8d5}
+.hov-seo-hero h1{max-width:900px;font:400 clamp(43px,6vw,79px)/1.08 Georgia,serif;letter-spacing:-.035em;margin:0 0 24px}
+.hov-seo-lead{max-width:850px;font-size:19px;line-height:1.7;color:#f3dfc3}
+.hov-seo-ethos{max-width:780px;color:#d5bc99;font-size:14px;line-height:1.8}
+.hov-seo-hero .hov-outline{color:#f1dfc8;border-color:#be9a62}
+.hov-seo-section{padding:90px 8%;border-bottom:1px solid #e1d5c7}
+.hov-seo-section h2,.hov-seo-conclusion h2{font:400 clamp(33px,4.3vw,54px)/1.12 Georgia,serif;max-width:1000px}
+.hov-seo-intro{color:#62584c;line-height:1.85;max-width:840px;margin-bottom:36px}
+.hov-seo-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.hov-seo-conclusion{background:#e9decf;padding:85px 8%}.hov-seo-conclusion p{max-width:820px;line-height:1.8;color:#655546}
+.hov-seo-nav{min-width:0;display:flex;gap:14px;flex:1;justify-content:center;align-items:center;flex-wrap:wrap}
+.hov-seo-nav a{font-size:12px;color:#55483e;white-space:nowrap}
+@media(max-width:1050px){.hov-quality-grid,.hov-seo-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.hov-seo-nav{gap:10px}.hov-seo-nav a{font-size:11px}}
+@media(max-width:760px){.hov-quality-grid,.hov-seo-grid{grid-template-columns:1fr}.hov-seo-hero{padding:65px 6% 70px}.hov-seo-section,.hov-seo-conclusion{padding:65px 6%}.hov-seo-nav{overflow-x:auto;flex-wrap:nowrap;justify-content:flex-start;padding:8px 0}.hov-seo-nav a{flex-shrink:0}.hov-quality .section-head{display:block}}
