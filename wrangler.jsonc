@@ -11,7 +11,23 @@
       "/api/*",
       "/media/*",
       "/product/*",
-      "/sitemap.xml"
+      "/sitemap.xml",
+      "/index.html",
+      "/brand.html",
+      "/brand/",
+      "/franchise.html",
+      "/franchise/",
+      "/indian-specialty-coffee",
+      "/indian-specialty-coffee/",
+      "/indian-loose-leaf-tea",
+      "/indian-loose-leaf-tea/",
+      "/indian-coffee-origins",
+      "/indian-coffee-origins/",
+      "/specialty-coffee-nagpur",
+      "/specialty-coffee-nagpur/",
+      "/specialty-coffee-nagpur.html",
+      "/orthodox-tea-nagpur",
+      "/orthodox-tea-nagpur.html"
     ]
   },
   "d1_databases": [

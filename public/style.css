@@ -82,3 +82,40 @@ header nav{min-width:0;overflow-x:auto;justify-content:flex-start;white-space:no
 .hov-uploaded-art a{display:block;max-width:1800px;margin:0 auto;line-height:0}
 .hov-uploaded-art img{display:block;width:100%;height:auto;max-width:100%;object-fit:contain}
 .hov-uploaded-art a:focus-visible{outline:3px solid #e7c38a;outline-offset:-4px}
+
+.hov-search-page {
+  width: min(100%, 940px);
+  min-height: 70vh;
+  margin-inline: auto;
+  line-height: 1.7;
+}
+.hov-search-page h1 {
+  font: 400 clamp(2.5rem, 6vw, 4.5rem)/1.08 Georgia, serif;
+  margin: 0 0 1.25rem;
+  overflow-wrap: anywhere;
+}
+.hov-search-page h2 {
+  font: 400 clamp(1.5rem, 4vw, 2.25rem)/1.2 Georgia, serif;
+  margin: 2rem 0 .5rem;
+}
+.hov-search-page h3 { margin: 0; }
+.hov-search-page h3 + p { margin: .25rem 0 0; }
+.hov-search-page p { max-width: 68ch; }
+.hov-search-page .hov-search-lead { font-size: 1.125rem; }
+.hov-search-page a:not(.gold-btn), .hov-search-secondary a, #origins h3 a {
+  text-decoration: underline;
+  text-underline-offset: .2em;
+}
+.hov-search-page address { font-style: normal; }
+.hov-search-map { margin: 1.5rem 0; }
+.hov-search-map img, .hov-search-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+}
+.hov-search-image { max-width: 440px; }
+.hov-search-list, .hov-search-packs, .hov-search-links { padding-inline-start: 1.25rem; }
+.hov-search-list li { padding: .6rem 0; }
+.hov-search-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1rem; }
+.hov-search-secondary { text-align: center; margin: 1rem auto 0; }
