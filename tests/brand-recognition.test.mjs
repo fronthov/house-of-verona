@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import worker from '../src/index.js';
+import { searchSitemap } from '../src/seo.js';
 
 const load = path => readFileSync(new URL('../' + path, import.meta.url), 'utf8');
 const canonical = 'https://houseofverona.in/';
@@ -41,17 +41,7 @@ test('existing storefront controls and canonical identity links remain', () => {
 test('official logo images appear in both static and dynamic sitemaps', async () => {
   const staticXml = load('public/sitemap.xml');
   assert.ok(staticXml.includes('xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"'));
-  const env = {
-    DB: {
-      prepare(sql) {
-        if (sql.startsWith('SELECT COUNT')) return { first: async () => ({ n: 0 }) };
-        return { all: async () => ({ results: [] }) };
-      },
-    },
-    ASSETS: { fetch: async () => new Response(null, { status: 404 }) },
-    STORE_OPEN: 'true',
-  };
-  const response = await worker.fetch(new Request(canonical + 'sitemap.xml'), env);
+  const response = searchSitemap([]);
   assert.equal(response.status, 200);
   const dynamic = await response.text();
   for (const file of ['house-of-verona-official-logo-nagpur.png', 'house-of-verona-gold-emblem-nagpur.png']) {
