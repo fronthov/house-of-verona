@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-<url><loc>https://houseofverona.in/</loc></url>
-<url><loc>https://houseofverona.in/brand</loc></url>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+<url><loc>https://houseofverona.in/</loc><image:image><image:loc>https://houseofverona.in/assets/house-of-verona-official-logo-nagpur.png</image:loc></image:image><image:image><image:loc>https://houseofverona.in/assets/house-of-verona-gold-emblem-nagpur.png</image:loc></image:image></url>
+<url><loc>https://houseofverona.in/brand</loc><image:image><image:loc>https://houseofverona.in/assets/house-of-verona-official-logo-nagpur.png</image:loc></image:image><image:image><image:loc>https://houseofverona.in/assets/house-of-verona-gold-emblem-nagpur.png</image:loc></image:image></url>
 <url><loc>https://houseofverona.in/franchise</loc></url>
 <url><loc>https://houseofverona.in/indian-specialty-coffee</loc></url>
 <url><loc>https://houseofverona.in/indian-loose-leaf-tea</loc></url>

@@ -209,9 +209,13 @@ export function searchCafe() {
 
 export function searchSitemap(list) {
   const paths = [...staticPaths, ...list.map(product => productPath(product.id))];
+  const logoPages = new Set(['/', '/brand']);
+  const imgs = [SITE + '/assets/house-of-verona-official-logo-nagpur.png', SITE + '/assets/house-of-verona-gold-emblem-nagpur.png'];
   return new Response('<?xml version="1.0" encoding="UTF-8"?>' +
-    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' +
-    paths.map(path => '<url><loc>' + e(SITE + path) + '</loc></url>').join('') + '</urlset>',
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">' +
+    paths.map(path => '<url><loc>' + e(SITE + path) + '</loc>' +
+      (logoPages.has(path) ? imgs.map(image => '<image:image><image:loc>' + e(image) + '</image:loc></image:image>').join('') : '') +
+      '</url>').join('') + '</urlset>',
   { headers: { 'content-type': 'application/xml; charset=utf-8', 'cache-control': 'public, max-age=600' } });
 }
 
