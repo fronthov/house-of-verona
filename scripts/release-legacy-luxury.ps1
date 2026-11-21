@@ -10,7 +10,7 @@ if($health.healthy -ne $true -or $health.storeOpen -ne $true){throw 'Live store 
 $offerCode=0
 try{$r=Invoke-WebRequest 'https://houseofverona.in/api/membership/offer' -UseBasicParsing -TimeoutSec 20 -ErrorAction Stop;$offerCode=[int]$r.StatusCode}catch{if(!$_.Exception.Response){throw};$offerCode=[int]$_.Exception.Response.StatusCode}
 if($offerCode -ne 404){throw "Live membership endpoint is no longer legacy (HTTP $offerCode). Stop to avoid changing newer backend."}
-$brand=Invoke-WebRequest 'https://houseofverona.in/brand.html' -UseBasicParsing -TimeoutSec 20
+$brand=Invoke-WebRequest 'https://houseofverona.in/brand' -UseBasicParsing -TimeoutSec 20
 if($brand.StatusCode -ne 200){throw 'Existing official brand page not accessible.'}
 $catalog=Invoke-RestMethod 'https://houseofverona.in/api/catalog' -TimeoutSec 20
 if($catalog.storeOpen -ne $true -or !($catalog.products.Count -gt 0)){throw 'Existing catalog is not available.'}
@@ -47,8 +47,8 @@ Write-Host 'Cloudflare D1 recovery bookmark saved:' $checkpoint -ForegroundColor
 Write-Host 'Deploying existing storefront backend with visual improvements...' -ForegroundColor Cyan
 Wrangler -A @('deploy')
 $homepageResponse=Invoke-WebRequest ('https://houseofverona.in/?verona-release='+[DateTimeOffset]::UtcNow.ToUnixTimeSeconds()) -UseBasicParsing -TimeoutSec 25 -Headers @{'Cache-Control'='no-cache'}
-$fr=Invoke-WebRequest 'https://houseofverona.in/franchise.html' -UseBasicParsing -TimeoutSec 25
-$br=Invoke-WebRequest 'https://houseofverona.in/brand.html' -UseBasicParsing -TimeoutSec 25
+$fr=Invoke-WebRequest 'https://houseofverona.in/franchise' -UseBasicParsing -TimeoutSec 25
+$br=Invoke-WebRequest 'https://houseofverona.in/brand' -UseBasicParsing -TimeoutSec 25
 $check=Invoke-RestMethod 'https://houseofverona.in/api/health' -TimeoutSec 25
 if($homepageResponse.StatusCode -ne 200 -or !$homepageResponse.Content.Contains('A Taste of India,') -or $fr.StatusCode -ne 200 -or $br.StatusCode -ne 200 -or $check.storeOpen -ne $true){throw 'Deploy uploaded, but live verification failed. Check Cloudflare deployment history for rollback.'}
 Write-Host 'House of Verona luxury homepage published, franchise and brand pages confirmed.' -ForegroundColor Green
